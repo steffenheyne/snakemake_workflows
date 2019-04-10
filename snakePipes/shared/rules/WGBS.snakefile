@@ -21,9 +21,9 @@ def get_awk_cmd(fasta):
 if fromBam:
     rule link_bam:
         input:
-            indir+"/{sample}.bam"
+            indir+"/{sample}"+bam_ext
         output:
-            "bams/{sample}"+bam_ext
+            "bams/{sample}.PCRrm.bam"
         shell:
             "( [ -f {output} ] || ln -s -r {input} {output} ) " #&& touch -h {output}"
 
