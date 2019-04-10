@@ -425,7 +425,7 @@ else:
 if fromBam:
     rule get_flagstat:
         input:
-            bam="bams/{sample}.bam"
+            bam="bams/{sample}.PCRrm.bam"
         output:
             fstat="QC_metrics/{sample}.flagstat"
         log:
