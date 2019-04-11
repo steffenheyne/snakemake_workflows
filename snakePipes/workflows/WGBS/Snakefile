@@ -245,17 +245,28 @@ else:
             convert_refG(convRef),
             expand("bams/{sample}.PCRrm.bam", sample = samples),
             expand("QC_metrics/{sample}.Mbias.txt",sample=samples),
-            os.path.join("aux_files",re.sub('.fa','.poz.ran1M.sorted.bed',os.path.basename(refG))),
-            calc_doc(intList,False,skipDOC),
+            #os.path.join("aux_files",re.sub('.fa','.poz.ran1M.sorted.bed',os.path.basename(refG))),
+            #calc_doc(intList,False,skipDOC),
             'QC_metrics/QC_report.html',
             run_deeptools(skipGCbias),
             expand("methXT/{sample}_CpG.bedGraph",sample=samples),
             expand("methXT/{sample}.CpG.filt2.bed",sample=samples),
-            run_CpG_stats(sampleSheet),
-            run_metilene_all(sampleSheet),
-            run_int_aggStats(intList,False),
-            run_int_aggStats(intList,sampleSheet),
-            run_aggStats_report(intList,sampleSheet)
+            #run_CpG_stats(sampleSheet),
+            #run_metilene_all(sampleSheet),
+            #run_int_aggStats(intList,False),
+            #run_int_aggStats(intList,sampleSheet),
+            #run_aggStats_report(intList,sampleSheet)
+            "custom_stats/on_target_stats.all_reads.txt",
+            "custom_stats/on_target_stats.mapq20.txt",
+            expand("custom_stats/{sample}_CpG.bedGraph",sample=samples),
+            expand("custom_stats/{sample}.mean_methyl_per_region.tsv",sample=samples),
+            "custom_stats/coverage_per_base.targets.bed",
+            "custom_stats/on_target_stats.per_region.mapq20.tsv",
+            "custom_stats/on_target_stats.per_region.tsv",
+            "custom_stats/targets.CpG.bed",
+            "custom_stats/targets.CpG.coverage.txt",
+            "custom_stats/mean_coverage_per_base.targets.bed",
+            "custom_stats/mean_methyl_per_region.tsv"
 
 
 ### execute after workflow finished ############################################
