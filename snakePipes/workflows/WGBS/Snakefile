@@ -60,12 +60,8 @@ if not fromBam:
             with io.TextIOWrapper(gzip.open(INfile, 'r')) as f:
                 file_content = f.readline().strip()
             read_root=re.sub('_R1.fastq.gz','',os.path.basename(INfile))
-            try:
-                PL=re.sub('@','',file_content).split(":")[0]
-                PU=re.sub('@','',file_content).split(":")[2]
-            except:
-                PL="Illumina"
-                PU="Illumina"
+            PL=re.sub('@','',file_content).split(":")[0]
+            PU=re.sub('@','',file_content).split(":")[2]
             RG='@RG"\\t"ID:1"\\t"SM:'+read_root+'"\\t"LB:'+read_root+'"\\t"PL:'+PL+'"\\t"PU:'+PU
             RG_dict[read_root]=RG
         return RG_dict
@@ -206,9 +202,7 @@ if not fromBam:
         input:
             expand("FASTQ/{sample}{read}.fastq.gz", sample = samples, read = reads),
             expand("FASTQ_downsampled/{sample}{read}.fastq.gz", sample = samples, read = reads),
-            expand("FastQC/{sample}{read}_fastqc.html", sample = samples, read = reads),
             convert_refG(convRef),
-            expand("QC_metrics/{sample}.sorted.flagstat",sample=samples),
             expand("bams/{sample}.PCRrm.bam", sample = samples),
             expand("QC_metrics/{sample}.Mbias.txt",sample=samples),
             os.path.join("aux_files",re.sub('.fa','.poz.ran1M.sorted.bed',os.path.basename(refG))),
@@ -221,19 +215,7 @@ if not fromBam:
             run_metilene_all(sampleSheet),
             run_int_aggStats(intList,False),
             run_int_aggStats(intList,sampleSheet),
-            run_aggStats_report(intList,sampleSheet),
-            "custom_stats/on_target_stats.all_reads.txt",
-            "custom_stats/on_target_stats.mapq20.txt",
-            expand("custom_stats/{sample}_CpG.bedGraph",sample=samples),
-            expand("custom_stats/{sample}.mean_methyl_per_region.tsv",sample=samples),
-            "custom_stats/coverage_per_base.targets.bed",
-            "custom_stats/on_target_stats.per_region.mapq20.tsv",
-            "custom_stats/on_target_stats.per_region.tsv",
-            "custom_stats/targets.CpG.bed",
-            "custom_stats/targets.CpG.coverage.txt",
-            "custom_stats/mean_coverage_per_base.targets.bed",
-            "custom_stats/mean_methyl_per_region.tsv",
-            run_cutadapt(trimReads)
+            run_aggStats_report(intList,sampleSheet)
 
 
 else:
@@ -244,31 +226,19 @@ else:
     rule all:
         input:
             convert_refG(convRef),
-            expand("bams/{sample}.PCRrm.bam", sample = samples),
-            expand("QC_metrics/{sample}.sorted.flagstat",sample=samples),
+            expand("bams/{sample}"+bam_ext, sample = samples),
             expand("QC_metrics/{sample}.Mbias.txt",sample=samples),
-            #os.path.join("aux_files",re.sub('.fa','.poz.ran1M.sorted.bed',os.path.basename(refG))),
-            #calc_doc(intList,False,skipDOC),
+            os.path.join("aux_files",re.sub('.fa','.poz.ran1M.sorted.bed',os.path.basename(refG))),
+            calc_doc(intList,False,skipDOC),
             'QC_metrics/QC_report.html',
             run_deeptools(skipGCbias),
             expand("methXT/{sample}_CpG.bedGraph",sample=samples),
             expand("methXT/{sample}.CpG.filt2.bed",sample=samples),
-            #run_CpG_stats(sampleSheet),
-            #run_metilene_all(sampleSheet),
-            #run_int_aggStats(intList,False),
-            #run_int_aggStats(intList,sampleSheet),
-            #run_aggStats_report(intList,sampleSheet)
-            "custom_stats/on_target_stats.all_reads.txt",
-            "custom_stats/on_target_stats.mapq20.txt",
-            expand("custom_stats/{sample}_CpG.bedGraph",sample=samples),
-            expand("custom_stats/{sample}.mean_methyl_per_region.tsv",sample=samples),
-            "custom_stats/coverage_per_base.targets.bed",
-            "custom_stats/on_target_stats.per_region.mapq20.tsv",
-            "custom_stats/on_target_stats.per_region.tsv",
-            "custom_stats/targets.CpG.bed",
-            "custom_stats/targets.CpG.coverage.txt",
-            "custom_stats/mean_coverage_per_base.targets.bed",
-            "custom_stats/mean_methyl_per_region.tsv"
+            run_CpG_stats(sampleSheet),
+            run_metilene_all(sampleSheet),
+            run_int_aggStats(intList,False),
+            run_int_aggStats(intList,sampleSheet),
+            run_aggStats_report(intList,sampleSheet)
 
 
 ### execute after workflow finished ############################################
