@@ -190,5 +190,4 @@ else:
 onsuccess:
     cf.cleanLogs(outdir)
     if "verbose" in config and config["verbose"]:
-        with open (os.path.join(outdir, 'pipeline.log'),"a") as lo:
-            print("--- WGBS workflow finished successfully! --------------------------------",file=lo)#\n \n
+        print("--- WGBS workflow finished successfully! --------------------------------")#\n \n
