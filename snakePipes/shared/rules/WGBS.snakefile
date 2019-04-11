@@ -220,19 +220,19 @@ rule index_PCRrm_bam:
     shell: "samtools index {input.sbam} 1>{log.out} 2>{log.err}"
 
 
-rule get_ran_CG:
-    input:
-        refG=refG
-    output:
-        pozF="aux_files/"+re.sub('.fa*','.poz.gz',os.path.basename(refG)),
-        ranCG=os.path.join("aux_files",re.sub('.fa','.poz.ran1M.sorted.bed',os.path.basename(refG)))
-    params:
-        awkCmd=get_awk_cmd(refG)
-    log:
-        err="aux_files/logs/get_ran_CG.err"
-    threads: 1
-    conda: CONDA_SHARED_ENV
-    shell: 'set +o pipefail; ' + os.path.join(workflow_tools,'methylCtools') + " fapos {input.refG}  " + re.sub('.gz','',"{output.pozF}") + ';cat '+ re.sub('.gz','',"{output.pozF}") +' | grep "+" -' + " | shuf | head -n 1000000 | awk {params.awkCmd}" + ' - | tr " " "\\t" | sort -k 1,1 -k2,2n - > ' + "{output.ranCG} 2>{log.err}"
+# rule get_ran_CG:
+#     input:
+#         refG=refG
+#     output:
+#         pozF="aux_files/"+re.sub('.fa*','.    ',os.path.basename(refG)),
+#         ranCG=os.path.join("aux_files",re.sub('.fa','.poz.ran1M.sorted.bed',os.path.basename(refG)))
+#     params:
+#         awkCmd=get_awk_cmd(refG)
+#     log:
+#         err="aux_files/logs/get_ran_CG.err"
+#     threads: 1
+#     conda: CONDA_SHARED_ENV
+#     shell: 'set +o pipefail; ' + os.path.join(workflow_tools,'methylCtools') + " fapos {input.refG}  " + re.sub('.gz','',"{output.pozF}") + ';cat '+ re.sub('.gz','',"{output.pozF}") +' | grep "+" -' + " | shuf | head -n 1000000 | awk {params.awkCmd}" + ' - | tr " " "\\t" | sort -k 1,1 -k2,2n - > ' + "{output.ranCG} 2>{log.err}"
 
 
 rule calc_Mbias:
