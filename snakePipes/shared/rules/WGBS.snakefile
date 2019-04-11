@@ -437,7 +437,7 @@ rule get_flagstat:
     conda: CONDA_SHARED_ENV
     shell: "samtools flagstat {input.bam} > {output.fstat} 2>{log.err}"
 
-rule get_flagstat:
+rule get_flagstat_sorted:
     input:
         bam="bams/{sample}.sorted.bam"
     output:
