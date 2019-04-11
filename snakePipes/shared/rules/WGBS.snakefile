@@ -234,7 +234,7 @@ rule get_ran_CG:
      threads: nthreads
      conda: CONDA_SHARED_ENV
      shell: """
-         set +o pipefail; {params.mathylCtools} fapos {input.refG} - | pigz -c -p {threads} > {output.pozF;
+         set +o pipefail; {params.methylCtools} fapos {input.refG} - | pigz -c -p {threads} > {output.pozF};
          """             
 #cat '+ re.sub('.gz','',"{output.pozF}") +' | grep "+" -' + " | shuf | head -n 1000000 | awk {params.awkCmd}" + ' - | tr " " "\\t" | sort -k 1,1 -k2,2n - > ' + "{output.ranCG} 2>{log.err}"
 
