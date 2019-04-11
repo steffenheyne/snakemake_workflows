@@ -23,7 +23,7 @@ if fromBam:
         input:
             indir+"/{sample}"+bam_ext
         output:
-            "bams/{sample}.PCRrm.bam"
+            "bams/{sample}.sorted.bam"
         shell:
             "( [ -f {output} ] || ln -s -r {input} {output} ) " #&& touch -h {output}"
 
@@ -178,32 +178,31 @@ if trimReads is None and not fromBam:
         conda: CONDA_WGBS_ENV
         shell: "tmp_map=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample});echo $tmp_map; bwameth.py --threads  {threads}  --read-group {params.RG} --reference {input.crefG} {input.R1} {input.R2} | samtools sort -T $tmp_map -m 3G -@ {params.sortThreads} -o {output.sbam} 1>{log.out} 2>{log.err}"
 
-if not fromBam:
-    rule index_bam:
-        input:
-            sbam="bams/{sample}.sorted.bam"
-        output:
-            sbami="bams/{sample}.sorted.bam.bai"
-        log:
-            err="bams/logs/{sample}.index_bam.err",
-            out="bams/logs/{sample}.index_bam.out"
-        conda: CONDA_SHARED_ENV
-        shell: "samtools index {input.sbam} 1>{log.out} 2>{log.err}"
+rule index_bam:
+    input:
+        sbam="bams/{sample}.sorted.bam"
+    output:
+        sbami="bams/{sample}.sorted.bam.bai"
+    log:
+        err="bams/logs/{sample}.index_bam.err",
+        out="bams/logs/{sample}.index_bam.out"
+    conda: CONDA_SHARED_ENV
+    shell: "samtools index {input.sbam} 1>{log.out} 2>{log.err}"
 
-    rule rm_dupes:
-        input:
-            sbami="bams/{sample}.sorted.bam.bai",
-            sbam="bams/{sample}.sorted.bam"
-        output:
-            rmDupbam="bams/{sample}.PCRrm.bam"
-        log:
-            err="bams/logs/{sample}.rm_dupes.err",
-            out="bams/logs/{sample}.rm_dupes.out"
-        params:
-            #tempdir=tempfile.mkdtemp(suffix='',prefix='',dir=tempdir)
-        threads: nthreads
-        conda: CONDA_SAMBAMBA_ENV
-        shell: "tmp_dupes=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample}); echo $tmp_dupes; sambamba markdup --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t {threads} {input.sbam} {output.rmDupbam} 1>{log.out} 2>{log.err}"
+rule rm_dupes:
+    input:
+        sbami="bams/{sample}.sorted.bam.bai",
+        sbam="bams/{sample}.sorted.bam"
+    output:
+        rmDupbam="bams/{sample}.PCRrm.bam"
+    log:
+        err="bams/logs/{sample}.rm_dupes.err",
+        out="bams/logs/{sample}.rm_dupes.out"
+    params:
+        #tempdir=tempfile.mkdtemp(suffix='',prefix='',dir=tempdir)
+    threads: nthreads
+    conda: CONDA_SAMBAMBA_ENV
+    shell: "tmp_dupes=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample}); echo $tmp_dupes; sambamba markdup --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t {threads} {input.sbam} {output.rmDupbam} 1>{log.out} 2>{log.err}"
 
 
 rule index_PCRrm_bam:
@@ -426,28 +425,28 @@ else:
             shell: os.path.join(workflow_tools,'conversionRate_KS.sh ')+ "{params.pfx} {output.R12cr} 1>{log.out} 2>{log.err}"
 
 
-if fromBam:
-    rule get_flagstat:
-        input:
-            bam="bams/{sample}.PCRrm.bam"
-        output:
-            fstat="QC_metrics/{sample}.flagstat"
-        log:
-            err="QC_metrics/logs/{sample}.get_flagstat.err"
-        threads: 1
-        conda: CONDA_SHARED_ENV
-        shell: "samtools flagstat {input.bam} > {output.fstat} 2>{log.err}"
-else:
-    rule get_flagstat:
-        input:
-            bam="bams/{sample}.sorted.bam"
-        output:
-            fstat="QC_metrics/{sample}.flagstat"
-        log:
-            err="QC_metrics/logs/{sample}.get_flagstat.err"
-        threads: 1
-        conda: CONDA_SHARED_ENV
-        shell: "samtools flagstat {input.bam} > {output.fstat} 2>{log.err}"
+
+rule get_flagstat:
+    input:
+        bam="bams/{sample}.PCRrm.bam"
+    output:
+        fstat="QC_metrics/{sample}.flagstat"
+    log:
+        err="QC_metrics/logs/{sample}.get_flagstat.err"
+    threads: 1
+    conda: CONDA_SHARED_ENV
+    shell: "samtools flagstat {input.bam} > {output.fstat} 2>{log.err}"
+
+rule get_flagstat:
+    input:
+        bam="bams/{sample}.sorted.bam"
+    output:
+        fstat="QC_metrics/{sample}.sorted.flagstat"
+    log:
+        err="QC_metrics/logs/{sample}.sorted.get_flagstat.err"
+    threads: 1
+    conda: CONDA_SHARED_ENV
+    shell: "samtools flagstat {input.bam} > {output.fstat} 2>{log.err}"
 
 rule produce_report:
     input:
