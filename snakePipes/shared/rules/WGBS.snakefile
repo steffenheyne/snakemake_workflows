@@ -220,7 +220,7 @@ rule index_PCRrm_bam:
     shell: "samtools index {input.sbam} 1>{log.out} 2>{log.err}"
 
 
- rule get_ran_CG:
+rule get_ran_CG:
      input:
          refG=refG
      output:
