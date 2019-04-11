@@ -241,7 +241,7 @@ rule get_ran_CG:
 
 rule calc_Mbias:
     input:
-        refG=refG,C
+        refG=refG,
         rmDupBam="bams/{sample}.PCRrm.bam",
         sbami="bams/{sample}.PCRrm.bam.bai"
     output:
