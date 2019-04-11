@@ -548,7 +548,9 @@ if sampleSheet or intList:
             err="aux_files/logs/make_CG_bed.err"
         threads: 1
         conda: CONDA_WGBS_ENV
-        shell: 'grep "+"' + " {input.pozF}  | awk {params.awkCmd}" + ' - | tr " " "\\t" | sort -k 1,1 -k2,2n - > ' + "{output.imdF}"
+        shell: """
+            zcat {input.pozF} | grep "+" | awk {params.awkCmd} | tr " " "\\t" | sort -k 1,1 -k2,2n > {output.imdF}
+            """
 
 
 if sampleSheet:
