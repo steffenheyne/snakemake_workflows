@@ -100,12 +100,13 @@ def run_int_aggStats(intList):
 ### include modules of other snakefiles ########################################
 ##some rules depend on the definitions above
 ################################################################################
+# WGBS
+include: os.path.join(maindir, "workflows", "WGBS.luminist", "WGBS_luminist.snakefile")
+
 if not fromBam:
     # FASTQ: either downsample FASTQ files or create symlinks to input files
     include: os.path.join(maindir, "shared", "rules", "FASTQ.snakefile")
 
-# WGBS
-include: os.path.join(maindir, "workflows", "WGBS.luminist", "WGBS_luminist.snakefile")
 
 
 ### execute before workflow starts #############################################
