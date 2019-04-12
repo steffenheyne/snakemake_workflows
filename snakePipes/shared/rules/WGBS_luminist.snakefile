@@ -339,7 +339,7 @@ rule get_CG_per_int:
 rule on_target_rate:
     input:
         bams=expand("bams/{sample}.PCRrm.bam",sample=samples),
-        bami=exapnd("bams/{sample}.PCRrm.bam.bai",sample=samples)
+        bami=expand("bams/{sample}.PCRrm.bam.bai",sample=samples)
     output:
         tab="custom_stats/on_target_stats.all_reads.txt",
         plot="custom_stats/on_target_stats.all_reads.pdf"
