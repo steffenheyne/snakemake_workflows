@@ -200,7 +200,8 @@ if not fromBam:
 
 rule get_flagstat:
     input:
-        bam="bams/{sample}.PCRrm.bam"
+        bam="bams/{sample}.PCRrm.bam",
+        bami="bams/{sample}.PCRrm.bam.bai"
     output:
         fstat="QC_metrics/{sample}.flagstat"
     log:
@@ -211,7 +212,8 @@ rule get_flagstat:
 
 rule get_flagstat_sorted:
     input:
-        bam="bams/{sample}.sorted.bam"
+        bam="bams/{sample}.sorted.bam",
+        bami="bams/{sample}.PCRrm.bam.bai"
     output:
         fstat="QC_metrics/{sample}.sorted.flagstat"
     log:
@@ -336,7 +338,8 @@ rule get_CG_per_int:
         
 rule on_target_rate:
     input:
-        bams=expand("bams/{sample}.PCRrm.bam",sample=samples)
+        bams=expand("bams/{sample}.PCRrm.bam",sample=samples),
+        bami=exapnd("bams/{sample}.PCRrm.bam.bai",sample=samples)
     output:
         tab="custom_stats/on_target_stats.all_reads.txt",
         plot="custom_stats/on_target_stats.all_reads.pdf"
@@ -360,7 +363,8 @@ rule on_target_rate:
 
 rule on_target_rate_mapq:
         input:
-            bams=expand("bams/{sample}.PCRrm.bam",sample=samples)
+            bams=expand("bams/{sample}.PCRrm.bam",sample=samples),
+            bami=expand("bams/{sample}.PCRrm.bam.bai",sample=samples)
         output:
             tab="custom_stats/on_target_stats.mapq20.txt",
             plot="custom_stats/on_target_stats.mapq20.pdf"
@@ -386,7 +390,8 @@ rule on_target_rate_mapq:
 
 rule on_target_reads_region:
         input:
-            bams=expand("bams/{sample}.PCRrm.bam",sample=samples)
+            bams=expand("bams/{sample}.PCRrm.bam",sample=samples),
+            bami=expand("bams/{sample}.PCRrm.bam.bai",sample=samples)
         output:
             tabq20="custom_stats/on_target_stats.per_region.mapq20.tsv",
             tab="custom_stats/on_target_stats.per_region.tsv"
@@ -443,7 +448,8 @@ rule methyl_extract_custom:
 
 rule per_base_cov_custom:
     input:
-        bams=expand("bams/{sample}.PCRrm.bam",sample=samples)
+        bams=expand("bams/{sample}.PCRrm.bam",sample=samples),
+        bami=expand("bams/{sample}.PCRrm.bam.bai",sample=samples)
     output:
         "custom_stats/coverage_per_base.targets.bed"
     params:
@@ -473,6 +479,7 @@ rule target_cpgs:
 rule target_cpg_coverage:
     input:
         bams=expand("bams/{sample}.PCRrm.bam",sample=samples),
+        bami=expand("bams/{sample}.PCRrm.bam.bai",sample=samples),
         cpg="custom_stats/targets.CpG.bed"
     output:
         "custom_stats/targets.CpG.coverage.txt"
