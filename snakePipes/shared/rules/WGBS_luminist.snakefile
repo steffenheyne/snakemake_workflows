@@ -113,7 +113,11 @@ rule rm_dupes:
         #tempdir=tempfile.mkdtemp(suffix='',prefix='',dir=tempdir)
     threads: nthreads
     conda: CONDA_SAMBAMBA_ENV
-    shell: "tmp_dupes=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample}); echo $tmp_dupes; sambamba markdup --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t {threads} {input.sbam} {output.rmDupbam} 1>{log.out} 2>{log.err}"
+    shell: """
+        tmp_dupes=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample}); echo $tmp_dupes; 
+        sambamba markdup -l 0 --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t {threads} {input.sbam} /dev/stdout | \
+        samtools addreplacerg -@2 -O SAM -r "@RG\\tID:1\\tSM:{wildcards.sample}" - | samtools view -b -@6 -o {output.rmDupbam} 1>{log.out} 2>{log.err}
+        """
 
 
 rule index_PCRrm_bam:
@@ -275,14 +279,14 @@ if blackList is None:
             methTab="methXT/{sample}_CpG.bedGraph"
         output:
             tabFilt="methXT/{sample}.CpG.filt2.bed"
-        params:
-            OUTtemp=lambda wildcards,input: os.path.join(outdir,re.sub('_CpG.bedGraph','.CpG.filt.bed',input.methTab))
         log:
             err="methXT/logs/{sample}.CpG_filt.err",
             out="methXT/logs/{sample}.CpG_filt.out"
         threads: 1
         conda: CONDA_WGBS_ENV
-        shell: '''awk \'(NR>1)\' {input.methTab} | awk \'{{ print $0, $5+$6, $1\"_\"$2}}\' | tr " " "\t" | sed \'1i chr\tstart\tend\tBeta\tM\tU\tCov\tms\' > {params.OUTtemp};mv -v {params.OUTtemp} {output.tabFilt} 1>{log.out} 2>{log.err}'''
+        shell: """
+            awk \'(NR>1)\' {input.methTab} | awk \'{{OFS="\t"; print $0, $5+$6, $1\"_\"$2}}\' | sed \'1i chr\tstart\tend\tBeta\tM\tU\tCov\tms\' > {output.tabFilt} 2>{log.err}
+            """
 
 else:
     rule CpG_filt:
