@@ -428,7 +428,7 @@ rule methyl_extract_custom:
             refG=genome_fasta
         output:
             methTab="custom_stats/methyl_calls/{sample}.Percent_Methylation_by_CpG.bedGraph",
-            meanTab="custom_stats/methyl_calls/{sample}.Percent_Methylation_by_region.tsv"
+            meanTab="custom_stats/methyl_calls/{sample}.Percent_Methylation_by_Region.tsv"
         params:
             targets=intList,
             OUTpfx=lambda wildcards,output: re.sub('_CpG.bedGraph','',output.methTab)
@@ -558,15 +558,32 @@ rule mean_target_coverage2:
         sambamba depth region {input.bam} -L {params.targets} -t {threads} -m -c 0 -q 20 --filter='mapping_quality > 19' -o {output} 1>{log.out} 2>{log.err}
         """
 
+rule mean_target_coverage2_raw:
+    input:
+        bam="bams/{sample}.PCRrm.bam",
+        bami="bams/{sample}.PCRrm.bam.bai"
+    output:
+        "custom_stats/depth_calls/{sample}.Coverage_by_Region_raw.tsv"
+    params:
+        targets=intList
+    conda: CONDA_SAMBAMBA_ENV
+    threads: nthreads
+    log:
+        err="custom_stats/logs/{sample}.depth_calls.region_raw.err",
+        out="custom_stats/logs/{sample}.depth_calls.region_raw.out"
+    shell:"""
+        sambamba depth region {input.bam} -L {params.targets} -t {threads} -m -c 0 -q 0 --filter='mapping_quality >= 0' -o {output} 1>{log.out} 2>{log.err}
+        """
+
 
 rule mean_methyl_per_region:
     input:
-        tsv=expand("custom_stats/{sample}.mean_methyl_per_region.tsv",sample=samples),
+        tsv=expand("custom_stats/methyl_calls/{sample}.Percent_Methylation_by_Region.tsv",sample=samples),
         tab="custom_stats/on_target_stats.per_region.mapq20.tsv",
-        meth=expand("custom_stats/{sample}_CpG.bedGraph",sample=samples),
+        meth=expand("custom_stats//methyl_calls/{sample}.Percent_Methylation_by_CpG.bedGraph",sample=samples),
         cpgs="custom_stats/targets.CpG.bed"
     output:
-        "custom_stats/mean_methyl_per_region.tsv"
+        "custom_stats/Percent_Methylation_by_Region.tsv"
     params:
         indir="custom_stats/",
         script = os.path.join(workflow_rscripts,"merge_methyl_data.R")
