@@ -21,7 +21,7 @@ for (f in files){
  all=merge(all,dat,all=T)
 }
 
-write.table(format(all, digits=2, scientific=F),file = outFile, quote = F,row.names = F,col.names = T,sep = "\t")
+write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = outFile, quote = F,row.names = F,col.names = T,sep = "\t")
 
 dat = read.table(paste0(FilePath,"/on_target_stats.per_region.mapq20.tsv"),header = T,comment.char = "")
 dat_mod = apply(dat[,-c(1:3)],2,function(x){x/sum(x)})*100
@@ -55,6 +55,6 @@ for (f in files){
   all=merge(all,dat[,1:4],all=T)
 }
 
-write.table(all,file = paste0(FilePath,"Percent_Methylation_by_CpG.tsv"), quote = F,row.names = F,col.names = T,sep = "\t")
+write.table(all[order(all[,1],all[,2]),],file = paste0(FilePath,"Percent_Methylation_by_CpG.tsv"), quote = F,row.names = F,col.names = T,sep = "\t")
 
 
