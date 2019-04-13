@@ -46,7 +46,7 @@ write.table(format(final, digits=2, scientific=F),file = "custom_stats/on_target
 tcpgs = read.table(paste0(FilePath,"targets.CpG.bed"),header = F)
 
 colnames(tcpgs) = c("chr","start","end","name","score","strand","context")
-#tcpgs$end = tcpgs$end+1
+tcpgs$end = tcpgs$end+1
   
 files = Sys.glob(paste0(FilePath,"/methyl_calls/*_CpG.bedGraph"))
 
