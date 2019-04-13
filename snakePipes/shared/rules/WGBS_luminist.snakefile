@@ -423,25 +423,24 @@ rule on_target_reads_region:
 
 rule methyl_extract_custom:
         input:
-            rmDupbam="bams/{sample}.PCRrm.bam",
-            sbami="bams/{sample}.PCRrm.bam.bai",
+            bam="bams/{sample}.PCRrm.bam",
+            bami="bams/{sample}.PCRrm.bam.bai",
             refG=genome_fasta
         output:
-            methTab="custom_stats/{sample}_CpG.bedGraph",
-            meanTab="custom_stats/{sample}.mean_methyl_per_region.tsv"
+            methTab="custom_stats/methyl_calls/{sample}.Percent_Methylation_by_CpG.bedGraph",
+            meanTab="custom_stats/methyl_calls/{sample}.Percent_Methylation_by_region.tsv"
         params:
-            mbias_ignore=mbias_ignore,
             targets=intList,
-            OUTpfx=lambda wildcards,output: os.path.join(outdir,re.sub('_CpG.bedGraph','',output.methTab))
+            OUTpfx=lambda wildcards,output: re.sub('_CpG.bedGraph','',output.methTab)
         log:
-            err="custom_stats/logs/{sample}.methyl_extract.err",
-            out="custom_stats/logs/{sample}.methyl_extract.out"
+            err="custom_stats/logs/{sample}.methyl_calls.err",
+            out="custom_stats/logs/{sample}.methyl_calls.out"
         threads: nthreads
         conda: CONDA_WGBS_ENV
         shell: """
             MethylDackel extract -o {params.OUTpfx} -l {params.targets} \
-                -q 20 -p 20 --minDepth 1 --mergeContext -@ {threads} \
-                {input.refG} {input.rmDupbam} 1>{log.out} 2>{log.err};
+                -q 20 -p 20 --minDepth 10 --mergeContext -@ {threads} \
+                {input.refG} {input.bam} 1>{log.out} 2>{log.err};
             bedtools map -a {params.targets} -b {output.methTab} \
                 -c 4 -o mean -prec 4 > {output.meanTab} 2>>{log.err}
             """
@@ -460,6 +459,23 @@ rule per_base_cov_custom:
         out="custom_stats/logs/coverage_per_base.targets.out"
     shell:"""
         cat <(echo -e '#chr\tpos\t'$(echo '{input.bams}' | tr ' ' '\n' | sed 's/.*\///' | sed 's/.PCRrm.bam//g' | tr '\n' '\t')) <(samtools depth -a -q 20 -Q 20 {input.bams} -b <(cat {params.targets} | awk '{{OFS="\t";print $1,$2-1,$3-1}}') ) > {output} 2>{log.err}
+        """
+
+rule per_base_cov_custom2:
+    input:
+        bam="bams/{sample}.PCRrm.bam",
+        bami="bams/{sample}.PCRrm.bam.bai"
+    output:
+        "custom_stats/depth_calls/{sample}.Coverage_by_Base.tsv"
+    params:
+        targets=intList
+    conda: CONDA_SAMBAMBA_ENV
+    threads: nthreads
+    log:
+        err="custom_stats/logs/{sample}.depth_calls.base.err",
+        out="custom_stats/logs/{sample.depth_calls.base.out"
+    shell:"""
+        sambamba depth base {input.bam} -L {params.targets} -t {threads} -m -c 0 -q 20 --filter='mapping_quality > 19' -o {output} 1>{log.out} 2>{log.err}
         """
 
 rule target_cpgs:
@@ -490,6 +506,22 @@ rule target_cpg_coverage:
         cat <(echo -e '#chr\tpos\t'$(echo '{input.bams}' | tr ' ' '\n' | sed 's/.*\///' | sed 's/.PCRrm.bam//g' | tr '\n' '\t')) <(samtools depth -a -q 20 -Q 20 -b {input.cpg} {input.bams}) > {output} 2>{log.err}
     """
     
+rule target_cpg_coverage2:
+    input:
+        bam="bams/{sample}.PCRrm.bam",
+        bami="bams/{sample}.PCRrm.bam.bai",
+        cpg="custom_stats/targets.CpG.bed"
+    output:
+        "custom_stats/depth_calls/{sample}.Coverage_by_CpG.tsv"
+    log:
+        err="custom_stats/logs/{sample}.depth_calls.CpG.err",
+        out="custom_stats/logs/{sample}.depth_calls.CpG.out"
+    conda: CONDA_SAMBAMBA_ENV
+    threads: nthreads
+    shell: """
+        sambamba depth base {input.bam} -L {input.cpg} -t {threads} -m -c 0 -q 20 --filter='mapping_quality > 19' -o {output} 1>{log.out} 2>{log.err}
+    """
+
 
 rule mean_target_coverage:
     input:
@@ -509,13 +541,30 @@ rule mean_target_coverage:
             -o mean -prec 5) > {output} 2>{log.err}
         """
 
+rule mean_target_coverage2:
+    input:
+        bam="bams/{sample}.PCRrm.bam",
+        bami="bams/{sample}.PCRrm.bam.bai"
+    output:
+        "custom_stats/depth_calls/{sample}.Coverage_by_Region.tsv"
+    params:
+        targets=intList
+    conda: CONDA_SAMBAMBA_ENV
+    threads: nthreads
+    log:
+        err="custom_stats/logs/{sample}.depth_calls.region.err",
+        out="custom_stats/logs/{sample.depth_calls.region.out"
+    shell:"""
+        sambamba depth region {input.bam} -L {params.targets} -t {threads} -m -c 0 -q 20 --filter='mapping_quality > 19' -o {output} 1>{log.out} 2>{log.err}
+        """
+
+
 rule mean_methyl_per_region:
     input:
         tsv=expand("custom_stats/{sample}.mean_methyl_per_region.tsv",sample=samples),
         tab="custom_stats/on_target_stats.per_region.mapq20.tsv",
         meth=expand("custom_stats/{sample}_CpG.bedGraph",sample=samples),
         cpgs="custom_stats/targets.CpG.bed"
-        
     output:
         "custom_stats/mean_methyl_per_region.tsv"
     params:
