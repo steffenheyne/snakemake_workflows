@@ -473,7 +473,7 @@ rule per_base_cov_custom2:
     threads: nthreads
     log:
         err="custom_stats/logs/{sample}.depth_calls.base.err",
-        out="custom_stats/logs/{sample.depth_calls.base.out"
+        out="custom_stats/logs/{sample}.depth_calls.base.out"
     shell:"""
         sambamba depth base {input.bam} -L {params.targets} -t {threads} -m -c 0 -q 20 --filter='mapping_quality > 19' -o {output} 1>{log.out} 2>{log.err}
         """
