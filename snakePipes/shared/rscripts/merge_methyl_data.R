@@ -21,7 +21,7 @@ for (f in files){
  colnames(dat) = c("chr","start","end",name)
  all=merge(all,dat,all=T)
 }
-mmpr[mmpr=="."]<-NA
+all[all=="."]<-NA
 write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = outFile, quote = F,row.names = F,col.names = T,sep = "\t")
 
 ################
