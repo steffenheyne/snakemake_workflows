@@ -84,6 +84,23 @@ write.table(format(all[order(all[,1],all[,2]),], digits=4, scientific=F),file = 
 
 ################
 
+files = Sys.glob(paste0(FilePath,"/depth_calls/","*Coverage_by_Region_raw.tsv"))
+
+all = data_frame("chr"=character(0),"start"=integer(0),"end"=integer(0))
+print("Coverage_by_Region")
+for (f in files){
+  dat=read.table(f,stringsAsFactors = F,header = F,skip=1)[,c(1,2,3,4)]
+  
+  name = gsub(".*/(.*).Coverage_by_Region_raw.tsv",replacement = "\\1",f)
+  print(name)
+  colnames(dat) = c("chr","start","end",name)
+  all=merge(all,dat,all=T)
+}
+
+write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = "custom_stats/Coverage_by_Region.raw_read_count.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
+
+
+################
 
 
 dat = read.table(paste0(FilePath,"/on_target_stats.per_region.mapq20.tsv"),header = T,comment.char = "")
