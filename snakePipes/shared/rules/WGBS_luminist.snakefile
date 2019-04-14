@@ -580,7 +580,7 @@ rule mean_methyl_per_region:
     input:
         tsv=expand("custom_stats/methyl_calls/{sample}.Percent_Methylation_by_Region.tsv",sample=samples),
         tab="custom_stats/on_target_stats.per_region.mapq20.tsv",
-        meth=expand("custom_stats//methyl_calls/{sample}.Percent_Methylation_by_CpG.bedGraph",sample=samples),
+        meth=expand("custom_stats/methyl_calls/{sample}.Percent_Methylation_by_CpG.bedGraph",sample=samples),
         cpgs="custom_stats/targets.CpG.bed"
     output:
         "custom_stats/Percent_Methylation_by_Region.tsv"
