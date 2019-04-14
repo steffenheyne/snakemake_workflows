@@ -12,7 +12,7 @@ print(getwd())
 files = Sys.glob(paste0(FilePath,"/methyl_calls/","*Percent_Methylation_by_Region.tsv"))
 
 all = data_frame("chr"=character(0),"start"=integer(0),"end"=integer(0))
- 
+print("Percent_Methylation_by_Region")
 for (f in files){
  dat=read.table(f,stringsAsFactors = F)
  
@@ -29,7 +29,7 @@ write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = 
 files = Sys.glob(paste0(FilePath,"/depth_calls/","*Coverage_by_Base.tsv"))
 
 all = data_frame("chr"=character(0),"pos"=integer(0))
-
+print("Coverage_by_Base")
 for (f in files){
   dat=read.table(f,stringsAsFactors = F,header = T)[,c("REF","POS","COV")]
   
@@ -49,7 +49,7 @@ write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = 
 files = Sys.glob(paste0(FilePath,"/depth_calls/","*Coverage_by_CpG.tsv"))
 
 all = data_frame("chr"=character(0),"pos"=integer(0))
-
+print("Coverage_by_CpG")
 for (f in files){
   dat=read.table(f,stringsAsFactors = F,header = T)[,c("REF","POS","COV")]
   
@@ -69,9 +69,9 @@ write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = 
 files = Sys.glob(paste0(FilePath,"/depth_calls/","*Coverage_by_Region.tsv"))
 
 all = data_frame("chr"=character(0),"start"=integer(0),"end"=integer(0))
-
+print("Coverage_by_Region")
 for (f in files){
-  dat=read.table(f,stringsAsFactors = F,header = T,comment.char = "")[,c(1,2,3,5)]
+  dat=read.table(f,stringsAsFactors = F,header = F,skip=1)[,c(1,2,3,5)]
   
   name = gsub(".*/(.*).Coverage_by_Region.tsv",replacement = "\\1",f)
   print(name)
@@ -113,7 +113,7 @@ files = Sys.glob(paste0(FilePath,"/methyl_calls/*_CpG.bedGraph"))
 #all = data_frame("chr"=character(0),"start"=integer(0),"end"=integer(0))
 
 all = tcpgs[,c("chr","start","end")] 
-
+print("Percent_Methylation_by_CpG")
 for (f in files){
   dat=read.table(f,stringsAsFactors = F,skip = 1)
   name = gsub(".*/([^\\/]*).Percent_Methylation_by_CpG.bedGraph",replacement = "\\1",f)
