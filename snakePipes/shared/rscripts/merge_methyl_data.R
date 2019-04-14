@@ -87,7 +87,7 @@ write.table(format(all[order(all[,1],all[,2]),], digits=4, scientific=F),file = 
 files = Sys.glob(paste0(FilePath,"/depth_calls/","*Coverage_by_Region_raw.tsv"))
 
 all = data_frame("chr"=character(0),"start"=integer(0),"end"=integer(0))
-print("Coverage_by_Region")
+print("Coverage_by_Region - raw")
 for (f in files){
   dat=read.table(f,stringsAsFactors = F,header = F,skip=1)[,c(1,2,3,4)]
   
