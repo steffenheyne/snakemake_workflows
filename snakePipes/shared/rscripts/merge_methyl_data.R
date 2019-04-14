@@ -41,10 +41,50 @@ for (f in files){
 
 all$pos <- all$pos+1
 
-write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = "Coverage_by_Base.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
+write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = "custom_stats/Coverage_by_Base.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
 
 
 ################
+
+files = Sys.glob(paste0(FilePath,"/depth_calls/","*Coverage_by_CpG.tsv"))
+
+all = data_frame("chr"=character(0),"pos"=integer(0))
+
+for (f in files){
+  dat=read.table(f,stringsAsFactors = F,header = T)[,c("REF","POS","COV")]
+  
+  name = gsub(".*/(.*).Coverage_by_CpG.tsv",replacement = "\\1",f)
+  print(name)
+  colnames(dat) = c("chr","pos",name)
+  all=merge(all,dat,all=T)
+}
+
+all$pos <- all$pos+1
+
+write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = "custom_stats/Coverage_by_CpG.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
+
+
+################
+
+files = Sys.glob(paste0(FilePath,"/depth_calls/","*Coverage_by_Region.tsv"))
+
+all = data_frame("chr"=character(0),"start"=integer(0),"end"=integer(0))
+
+for (f in files){
+  dat=read.table(f,stringsAsFactors = F,header = T,comment.char = "")[,c(1,2,3,5)]
+  
+  name = gsub(".*/(.*).Coverage_by_Region.tsv",replacement = "\\1",f)
+  print(name)
+  colnames(dat) = c("chr","start","end",name)
+  all=merge(all,dat,all=T)
+}
+
+write.table(format(all[order(all[,1],all[,2]),]),file = "custom_stats/Coverage_by_Region.mean.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
+
+
+################
+
+
 
 dat = read.table(paste0(FilePath,"/on_target_stats.per_region.mapq20.tsv"),header = T,comment.char = "")
 dat_mod = apply(dat[,-c(1:3)],2,function(x){x/sum(x)})*100
