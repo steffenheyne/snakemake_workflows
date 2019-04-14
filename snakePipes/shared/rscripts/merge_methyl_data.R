@@ -28,10 +28,10 @@ write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = 
 
 files = Sys.glob(paste0(FilePath,"/depth_calls/","*Coverage_by_Base.tsv"))
 
-all = data_frame("chr"=character(0),"start"=integer(0),"end"=integer(0))
+all = data_frame("chr"=character(0),"pos"=integer(0))
 
 for (f in files){
-  dat=read.table(f,stringsAsFactors = F,header = T)[,1:3]
+  dat=read.table(f,stringsAsFactors = F,header = T)[,c("REF","POS","COV")]
   
   name = gsub(".*/(.*).Coverage_by_Base.tsv",replacement = "\\1",f)
   print(name)
