@@ -572,7 +572,7 @@ rule mean_target_coverage2_raw:
         err="custom_stats/logs/{sample}.depth_calls.region_raw.err",
         out="custom_stats/logs/{sample}.depth_calls.region_raw.out"
     shell:"""
-        sambamba depth region {input.bam} -L {params.targets} -t {threads} -m -c 0 -q 0 --filter='mapping_quality >= 0' -o {output} 1>{log.out} 2>{log.err}
+        sambamba depth region {input.bam} -L {params.targets} -t {threads} -c 0 -q 0 --filter='mapping_quality >= 0' -o {output} 1>{log.out} 2>{log.err}
         """
 
 
