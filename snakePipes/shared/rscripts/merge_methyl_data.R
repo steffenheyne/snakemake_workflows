@@ -79,7 +79,7 @@ for (f in files){
   all=merge(all,dat,all=T)
 }
 
-write.table(format(all[order(all[,1],all[,2]),]),file = "custom_stats/Coverage_by_Region.mean.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
+write.table(format(all[order(all[,1],all[,2]),], digits=4, scientific=F),file = "custom_stats/Coverage_by_Region.mean.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
 
 
 ################
