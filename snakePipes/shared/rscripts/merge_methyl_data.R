@@ -26,6 +26,26 @@ write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = 
 
 ################
 
+files = Sys.glob(paste0(FilePath,"/depth_calls/","*Coverage_by_Base.tsv"))
+
+all = data_frame("chr"=character(0),"start"=integer(0),"end"=integer(0))
+
+for (f in files){
+  dat=read.table(f,stringsAsFactors = F,header = T)[,1:3]
+  
+  name = gsub(".*/(.*).Coverage_by_Base.tsv",replacement = "\\1",f)
+  print(name)
+  colnames(dat) = c("chr","pos",name)
+  all=merge(all,dat,all=T)
+}
+
+all$pos <- all$pos+1
+
+write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = "Coverage_by_Base.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
+
+
+################
+
 dat = read.table(paste0(FilePath,"/on_target_stats.per_region.mapq20.tsv"),header = T,comment.char = "")
 dat_mod = apply(dat[,-c(1:3)],2,function(x){x/sum(x)})*100
 final= cbind(dat[,1:3],dat_mod)
