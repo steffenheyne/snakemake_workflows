@@ -115,8 +115,8 @@ rule rm_dupes:
     conda: CONDA_SAMBAMBA_ENV
     shell: """
         tmp_dupes=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample}); echo $tmp_dupes; 
-        (sambamba markdup -l 0 --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t {threads} {input.sbam} /dev/stdout | \
-        samtools view -h | grep -v "^@RG" | \ 
+        (sambamba markdup -l 0 --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t {threads} {input.sbam} /dev/stdout |
+        samtools view -h - | grep -v "^@RG" | \
         samtools addreplacerg -@2 -O SAM -r "@RG\\tID:1\\tSM:{wildcards.sample}" - | samtools view -b -@6 -o {output.rmDupbam}) 1>{log.out} 2>{log.err}
         """
 
