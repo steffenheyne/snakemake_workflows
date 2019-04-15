@@ -154,7 +154,7 @@ if not fromBam:
             "custom_stats/Percent_Methylation_by_Region.tsv",
             expand("custom_stats/depth_calls/{sample}.Coverage_by_CpG.tsv",sample=samples),
             expand("custom_stats/depth_calls/{sample}.Coverage_by_Base.tsv",sample=samples),
-            expand("custom_stats/depth_calls/{sample}.Coverage_by_Region.tsv",sample=samples).
+            expand("custom_stats/depth_calls/{sample}.Coverage_by_Region.tsv",sample=samples),
             expand("custom_stats/depth_calls/{sample}.Coverage_by_Region_raw.tsv",sample=samples),
             run_cutadapt(trimReads)
 
