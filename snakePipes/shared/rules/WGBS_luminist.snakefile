@@ -591,7 +591,7 @@ rule mean_methyl_per_region:
         out_methyl2="custom_stats/Percent_Methylation_by_CpG.tsv",
         out_depth1="custom_stats/Coverage_by_Region.mean.tsv",
         out_depth2="custom_stats/Coverage_by_Region.raw_read_count.tsv",
-        out_depth3="custom_stats/Coverage_by_CpG.tsv,
+        out_depth3="custom_stats/Coverage_by_CpG.tsv",
         out_depth4="custom_stats/Coverage_by_Base.tsv",
         # "custom_stats/on_target_stats.per_region.perc.tsv",
         # "custom_stats/on_target_stats.per_region.mapq20.perc.tsv"
