@@ -99,6 +99,10 @@ for (f in files){
 
 write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = "custom_stats/Coverage_by_Region.raw_read_count.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
 
+all_mod = apply(all[,-c(1:3)],2,function(x){x/sum(x)})*100
+
+write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = "custom_stats/Coverage_by_Region.raw_read_count.perc.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
+
 
 ################
 
@@ -139,6 +143,6 @@ for (f in files){
   all=merge(all,dat[,1:4],all=T)
 }
 
-write.table(all[order(all[,1],all[,2]),],file = paste0(FilePath,"Percent_Methylation_by_CpG.tsv"), quote = F,row.names = F,col.names = T,sep = "\t")
+write.table(all[order(all[,1],all[,2]),],file = "custom_stats/Percent_Methylation_by_CpG.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
 
 

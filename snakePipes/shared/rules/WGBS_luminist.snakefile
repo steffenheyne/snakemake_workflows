@@ -581,9 +581,20 @@ rule mean_methyl_per_region:
         tsv=expand("custom_stats/methyl_calls/{sample}.Percent_Methylation_by_Region.tsv",sample=samples),
         tab="custom_stats/on_target_stats.per_region.mapq20.tsv",
         meth=expand("custom_stats/methyl_calls/{sample}.Percent_Methylation_by_CpG.bedGraph",sample=samples),
+        depth1=expand("custom_stats/depth_calls/{sample}.Coverage_by_Region.tsv",sample=samples),
+        depth2=expand("custom_stats/depth_calls/{sample}.Coverage_by_Region_raw.tsv",sample=samples),
+        depth3=expand("custom_stats/depth_calls/{sample}.Coverage_by_CpG.tsv",sample=samples),
+        depth4=expand("custom_stats/depth_calls/{sample}.Coverage_by_Base.tsv",sample=samples),
         cpgs="custom_stats/targets.CpG.bed"
     output:
-        "custom_stats/Percent_Methylation_by_Region.tsv"
+        out_methyl1="custom_stats/Percent_Methylation_by_Region.tsv",
+        out_methyl2="custom_stats/Percent_Methylation_by_CpG.tsv",
+        out_depth1="custom_stats/Coverage_by_Region.mean.tsv",
+        out_depth2="custom_stats/Coverage_by_Region.raw_read_count.tsv",
+        out_depth3="custom_stats/Coverage_by_CpG.tsv,
+        out_depth4="custom_stats/Coverage_by_Base.tsv",
+        # "custom_stats/on_target_stats.per_region.perc.tsv",
+        # "custom_stats/on_target_stats.per_region.mapq20.perc.tsv"
     params:
         indir="custom_stats/",
         script = os.path.join(workflow_rscripts,"merge_methyl_data.R")
@@ -592,7 +603,7 @@ rule mean_methyl_per_region:
         out="custom_stats/logs/mean_methyl_per_region.out"
     conda: CONDA_WGBS_ENV
     shell:"""
-            Rscript {params.script} {params.indir} {output} 2> {log.err}
+            Rscript {params.script} {params.indir} {output.out_methyl1} 2> {log.err}
         """
 
 #sambamba depth base ../bams/*.PCRrm.bam -L /data_BSpipe/datasets/target_regions/targets.bed -z -m --min-base-quality 20 -F='mapping_quality>20' -t 20
