@@ -100,8 +100,8 @@ for (f in files){
 write.table(format(all[order(all[,1],all[,2]),], digits=2, scientific=F),file = "custom_stats/Coverage_by_Region.raw_read_count.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
 
 all_mod = apply(all[,-c(1:3)],2,function(x){x/sum(x)})*100
-
-write.table(format(all_mod[order(all_mod[,1],all_mod[,2]),], digits=2, scientific=F),file = "custom_stats/Coverage_by_Region.raw_read_count.perc.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
+final= cbind(all[,1:3],all_mod)
+write.table(format(final[order(final[,1],final[,2]),], digits=2, scientific=F),file = "custom_stats/Coverage_by_Region.raw_read_count.perc.tsv", quote = F,row.names = F,col.names = T,sep = "\t")
 
 
 ################
