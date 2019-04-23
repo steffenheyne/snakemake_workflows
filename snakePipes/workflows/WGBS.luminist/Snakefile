@@ -144,8 +144,8 @@ if not fromBam:
     rule all:
         input:
             expand("FASTQ/{sample}{read}.fastq.gz", sample = samples, read = reads),
-            run_FastQC(fromBam,trimReads),
-            run_ConvRate(fromBam,convRate),
+            #run_FastQC(fromBam,trimReads),
+            #run_ConvRate(fromBam,convRate),
             expand("QC_metrics/{sample}.sorted.flagstat",sample=samples),
             expand("bams/{sample}.PCRrm.bam", sample = samples),
             expand("QC_metrics/{sample}.Mbias.txt",sample=samples),
@@ -166,7 +166,6 @@ if not fromBam:
             expand("custom_stats/depth_calls/{sample}.Coverage_by_Region.tsv",sample=samples),
             expand("custom_stats/depth_calls/{sample}.Coverage_by_Region_raw.tsv",sample=samples),
             run_cutadapt(trimReads)
-
 
 else:
     localrules:
