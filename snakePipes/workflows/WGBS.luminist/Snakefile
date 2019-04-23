@@ -119,7 +119,6 @@ if not fromBam:
     include: os.path.join(maindir, "shared", "rules", "FASTQ.snakefile")
 
 
-
 ### execute before workflow starts #############################################
 ################################################################################
 onstart:

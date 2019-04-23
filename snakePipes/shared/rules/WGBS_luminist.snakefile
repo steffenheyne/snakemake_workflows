@@ -87,7 +87,11 @@ if not fromBam:
             RG=lambda wildcards: RG_dict[wildcards.sample]
         threads: nthreads
         conda: CONDA_WGBS_ENV
-        shell: "tmp_map=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample});echo $tmp_map; bwameth.py --threads  {threads} --read-group {params.RG} --reference {input.crefG} {input.R1} {input.R2} | samtools sort -T $tmp_map -m 3G -@ {params.sortThreads} -o {output.sbam} 1>{log.out} 2>{log.err}"
+        shell: """
+            tmp_map=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample}); echo $tmp_map; 
+            (bwameth.py --threads  {threads} --read-group {params.RG} --reference {input.crefG} {input.R1} {input.R2} | \
+            samtools sort -T $tmp_map -m 3G -@ {params.sortThreads} -o {output.sbam}) 1>{log.out} 2>{log.err}
+            """
 
 rule index_bam:
     input:
@@ -115,7 +119,7 @@ rule rm_dupes:
     conda: CONDA_SAMBAMBA_ENV
     shell: """
         tmp_dupes=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample}); echo $tmp_dupes; 
-        (sambamba markdup -l 0 --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t 8 {input.sbam} /dev/stdout |
+        (sambamba markdup -l 0 --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t 6 {input.sbam} /dev/stdout |
         samtools view -h - | grep -v "^@RG" | \
         samtools addreplacerg -@2 -O SAM -r "@RG\\tID:1\\tSM:{wildcards.sample}" - | samtools view -b -@6 -o {output.rmDupbam}) 1>{log.out} 2>{log.err}
         """
