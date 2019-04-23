@@ -97,6 +97,8 @@ def run_FastQC(fromBam, trimReads):
 def run_ConvRate(fromBam,convRate):
     if not fromBam and convRate:
         return([expand("QC_metrics/{sample}.conv.rate.txt",sample=samples)])
+    else:
+        return([])
 
 def run_int_aggStats(intList):
     if intList:
@@ -145,7 +147,7 @@ if not fromBam:
         input:
             expand("FASTQ/{sample}{read}.fastq.gz", sample = samples, read = reads),
             run_FastQC(fromBam,trimReads),
-            #run_ConvRate(fromBam,convRate),
+            run_ConvRate(fromBam,convRate),
             expand("QC_metrics/{sample}.sorted.flagstat",sample=samples),
             expand("bams/{sample}.PCRrm.bam", sample = samples),
             expand("QC_metrics/{sample}.Mbias.txt",sample=samples),
