@@ -41,6 +41,8 @@ verbose: False
 #### Flag to control the pipeline entry point
 fromBam: False
 bam_ext: '.PCRrm.bam'
+fastqc: False
+convRate: False
 ################################################################################
 # Call snakemake directly, i.e. without using the wrapper script:
 #

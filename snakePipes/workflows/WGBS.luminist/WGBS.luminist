@@ -17,7 +17,7 @@ import snakePipes.parserCommon as parserCommon
 
 def parse_args(defaults={"verbose": False, "configfile": None, "cluster_configfile":None, "max_jobs": 12, "nthreads": 8, "snakemake_options": "--use-conda", "tempdir": None,
                          "downsample": None, "trimReads": "user", "adapterSeq": "AGATCGGAAGAGC", "nextera": False, "trimThreshold": 10, "trimOtherArgs": None,
-                         "intList": [], "mbias_ignore": "auto", "fromBam": False}):
+                         "intList": [], "mbias_ignore": "auto", "fromBam": False, "fastqc": False, "convRate": False}):
     """
     Parse arguments from the command line.
     """
@@ -101,7 +101,19 @@ def parse_args(defaults={"verbose": False, "configfile": None, "cluster_configfi
     optional.add_argument("--fromBam",
                          dest="fromBam",
                          action="store_true",
-                         help=argparse.SUPPRESS,default=defaults["fromBam"])
+                         default=defaults["fromBam"])
+    
+    optional.add_argument("--fastqc",
+                         dest="fastqc",
+                         action="store_true",
+                         help="Run FastQC on inpit reads and trimmed reads (if --trimReads is used) (default: '%(default)s')",
+                         default=defaults["fastqc"])
+    
+    optional.add_argument("--convRate",
+                         dest="convRate",
+                         action="store_true",
+                         help="Calculate bisulfite-conversion rate based on a subsample of reads (fastq files) (default: '%(default)s')",
+                         default=defaults["convRate"])
 
     return parser
 
