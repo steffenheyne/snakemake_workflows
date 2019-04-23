@@ -17,7 +17,7 @@ import snakePipes.parserCommon as parserCommon
 
 def parse_args(defaults={"verbose": False, "configfile": None, "cluster_configfile":None, "max_jobs": 12, "nthreads": 8, "snakemake_options": "--use-conda", "tempdir": None,
                          "downsample": None, "trimReads": "user", "adapterSeq": "AGATCGGAAGAGC", "nextera": False, "trimThreshold": 10, "trimOtherArgs": None,
-                         "intList": [], "blackList": None, "mbias_ignore": "auto", "fromBam": False}):
+                         "intList": [], "mbias_ignore": "auto", "fromBam": False}):
     """
     Parse arguments from the command line.
     """
@@ -89,14 +89,6 @@ def parse_args(defaults={"verbose": False, "configfile": None, "cluster_configfi
                           action='append',
                           help="BED file(s) with target intervals to confine the analysis on. Use multiple times to pass multiple bed files. (default: '%(default)s')",
                           default=defaults["intList"])
-
-    optional.add_argument("--blackList",
-                          dest="blackList",
-                          metavar="STR",
-                          action='store',
-                          type=str,
-                          help="Bed file(s) with positions to mask for methylation calling. Useful for masking SNPs in your strain of interest. (default: '%(default)s')",
-                          default=defaults["blackList"])
 
     optional.add_argument("--mbias",
                           dest="mbias_ignore",

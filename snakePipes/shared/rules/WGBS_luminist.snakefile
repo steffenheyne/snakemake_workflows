@@ -48,9 +48,9 @@ rule preTrimFastQC:
         out="FastQC/logs/{sample}.preTrimFastQC.out"
     params:
         fqcout=os.path.join(outdir,'FastQC')
-    threads: nthreads
+    threads: 4
     conda: CONDA_SHARED_ENV
-    shell: "fastqc --outdir {params.fqcout} -t  {threads} {input.R1} {input.R2} 1>{log.out} 2>{log.err}"
+    shell: "fastqc --outdir {params.fqcout} -t {threads} {input.R1} {input.R2} 1>{log.out} 2>{log.err}"
 
 
 rule postTrimFastQC:
@@ -65,9 +65,9 @@ rule postTrimFastQC:
         out="FastQC_Cutadapt/logs/{sample}.postTrimFastQC.out"
     params:
         fqcout=os.path.join(outdir,'FastQC_Cutadapt')
-    threads: nthreads
+    threads: 4
     conda: CONDA_SHARED_ENV
-    shell: "fastqc --outdir {params.fqcout} -t  {threads} {input.R1cut} {input.R2cut} 1>{log.out} 2>{log.err}"
+    shell: "fastqc --outdir {params.fqcout} -t {threads} {input.R1cut} {input.R2cut} 1>{log.out} 2>{log.err}"
 
 
 if not fromBam:
@@ -111,11 +111,11 @@ rule rm_dupes:
         out="bams/logs/{sample}.rm_dupes.out"
     params:
         #tempdir=tempfile.mkdtemp(suffix='',prefix='',dir=tempdir)
-    threads: nthreads
+    threads: 14
     conda: CONDA_SAMBAMBA_ENV
     shell: """
         tmp_dupes=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample}); echo $tmp_dupes; 
-        (sambamba markdup -l 0 --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t {threads} {input.sbam} /dev/stdout |
+        (sambamba markdup -l 0 --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t 8 {input.sbam} /dev/stdout |
         samtools view -h - | grep -v "^@RG" | \
         samtools addreplacerg -@2 -O SAM -r "@RG\\tID:1\\tSM:{wildcards.sample}" - | samtools view -b -@6 -o {output.rmDupbam}) 1>{log.out} 2>{log.err}
         """
@@ -144,7 +144,7 @@ rule get_ran_CG:
          methylCtools=os.path.join(workflow_tools,'methylCtools')
      log:
          err="aux_files/logs/get_ran_CG.err"
-     threads: nthreads
+     threads: 3
      conda: CONDA_SHARED_ENV
      shell: """
          set +o pipefail; {params.methylCtools} fapos {input.refG} - | pigz -c -p {threads} > {output.pozF};
@@ -176,7 +176,7 @@ if not fromBam:
         log:
             err="FASTQ_downsampled/logs/{sample}.downsample_reads.err",
             out="FASTQ_downsampled/logs/{sample}.downsample_reads.out"
-        threads: nthreads
+        threads: 6
         conda: CONDA_SHARED_ENV
         shell: """
                 seqtk sample -s 100 {input.R1} 5000000 | pigz -p {threads} -9 > {output.R1downsampled}
@@ -240,72 +240,37 @@ rule produce_report:
     shell: "cp -v " + os.path.join(workflow_rscripts,"WGBS_QC_report_template.Rmd")+ " " + os.path.join("aux_files", "WGBS_QC_report_template.Rmd") + ';Rscript -e "rmarkdown::render(\''+os.path.join(outdir,"aux_files", "WGBS_QC_report_template.Rmd")+'\', params=list(QCdir=\'"' + os.path.join(outdir,"QC_metrics") +'"\' ), output_file =\'"'+ os.path.join(outdir,"QC_metrics",'QC_report.html"\'')+')"' + " 1>{log.out} 2>{log.err}"
 
 
-if mbias_ignore=="auto":
-    rule methyl_extract:
-        input:
-            rmDupbam="bams/{sample}.PCRrm.bam",
-            sbami="bams/{sample}.PCRrm.bam.bai",
-            refG=genome_fasta,
-            mbiasTXT="QC_metrics/{sample}.Mbias.txt"
-        output:
-            methTab="methXT/{sample}_CpG.bedGraph"
-        params:
-            OUTpfx=lambda wildcards,output: os.path.join(outdir,re.sub('_CpG.bedGraph','',output.methTab))
-        log:
-            err="methXT/logs/{sample}.methyl_extract.err",
-            out="methXT/logs/{sample}.methyl_extract.out"
-        threads: nthreads
-        conda: CONDA_WGBS_ENV
-        shell: "mi=$(cat {input.mbiasTXT} | sed 's/Suggested inclusion options: //' );MethylDackel extract  -o {params.OUTpfx} -q 10 -p 20 $mi --minDepth 10 --mergeContext --maxVariantFrac 0.25 --minOppositeDepth 5 -@ {threads} {input.refG} " + os.path.join(outdir,"{input.rmDupbam}") + " 1>{log.out} 2>{log.err}"
+rule methyl_extract:
+    input:
+        rmDupbam="bams/{sample}.PCRrm.bam",
+        sbami="bams/{sample}.PCRrm.bam.bai",
+        refG=genome_fasta
+    output:
+        methTab="methXT/{sample}_CpG.bedGraph"
+    params:
+        mbias_ignore=mbias_ignore,
+        OUTpfx=lambda wildcards,output: os.path.join(outdir,re.sub('_CpG.bedGraph','',output.methTab))
+    log:
+        err="methXT/logs/{sample}.methyl_extract.err",
+        out="methXT/logs/{sample}.methyl_extract.out"
+    threads: nthreads
+    conda: CONDA_WGBS_ENV
+    shell: "MethylDackel extract -o {params.OUTpfx} -q 10 -p 20 {params.mbias_ignore} --minDepth 10 --mergeContext --maxVariantFrac 0.25 --minOppositeDepth 5 -@ {threads} {input.refG} " + os.path.join(outdir,"{input.rmDupbam}") + " 1>{log.out} 2>{log.err}"
 
-else:
-    rule methyl_extract:
-        input:
-            rmDupbam="bams/{sample}.PCRrm.bam",
-            sbami="bams/{sample}.PCRrm.bam.bai",
-            refG=genome_fasta
-        output:
-            methTab="methXT/{sample}_CpG.bedGraph"
-        params:
-            mbias_ignore=mbias_ignore,
-            OUTpfx=lambda wildcards,output: os.path.join(outdir,re.sub('_CpG.bedGraph','',output.methTab))
-        log:
-            err="methXT/logs/{sample}.methyl_extract.err",
-            out="methXT/logs/{sample}.methyl_extract.out"
-        threads: nthreads
-        conda: CONDA_WGBS_ENV
-        shell: "MethylDackel extract -o {params.OUTpfx} -q 10 -p 20 {params.mbias_ignore} --minDepth 10 --mergeContext --maxVariantFrac 0.25 --minOppositeDepth 5 -@ {threads} {input.refG} " + os.path.join(outdir,"{input.rmDupbam}") + " 1>{log.out} 2>{log.err}"
 
-if blackList is None:
-    rule CpG_filt:
-        input:
-            methTab="methXT/{sample}_CpG.bedGraph"
-        output:
-            tabFilt="methXT/{sample}.CpG.filt2.bed"
-        log:
-            err="methXT/logs/{sample}.CpG_filt.err",
-            out="methXT/logs/{sample}.CpG_filt.out"
-        threads: 1
-        conda: CONDA_WGBS_ENV
-        shell: """
-            awk \'(NR>1)\' {input.methTab} | awk \'{{OFS="\t"; print $0, $5+$6, $1\"_\"$2}}\' | sed \'1i chr\tstart\tend\tBeta\tM\tU\tCov\tms\' > {output.tabFilt} 2>{log.err}
-            """
-
-else:
-    rule CpG_filt:
-        input:
-            methTab="methXT/{sample}_CpG.bedGraph",
-            blackListF=blackList
-        output:
-            tabFilt="methXT/{sample}.CpG.filt2.bed"
-        params:
-            OUTtemp=lambda wildcards,input: os.path.join(outdir,re.sub('_CpG.bedGraph','.CpG.filt.bed',input.methTab))
-        log:
-            err="methXT/logs/{sample}.CpG_filt.err",
-            out="methXT/logs/{sample}.CpG_filt.out"
-        threads: 1
-        conda: CONDA_WGBS_ENV
-        shell: '''awk \'(NR>1)\' {input.methTab} | awk \'{{ print $0, $5+$6, $1\"_\"$2}}\' | tr " " "\t" | sed \'1i chr\tstart\tend\tBeta\tM\tU\tCov\tms\' > {params.OUTtemp};bedtools intersect -v -a {params.OUTtemp} -b {input.blackListF} > {output.tabFilt} 1>{log.out} 2>{log.err}'''
+rule CpG_filt:
+    input:
+        methTab="methXT/{sample}_CpG.bedGraph"
+    output:
+        tabFilt="methXT/{sample}.CpG.filt2.bed"
+    log:
+        err="methXT/logs/{sample}.CpG_filt.err",
+        out="methXT/logs/{sample}.CpG_filt.out"
+    threads: 1
+    conda: CONDA_WGBS_ENV
+    shell: """
+        awk \'(NR>1)\' {input.methTab} | awk \'{{OFS="\t"; print $0, $5+$6, $1\"_\"$2}}\' | sed \'1i chr\tstart\tend\tBeta\tM\tU\tCov\tms\' > {output.tabFilt} 2>{log.err}
+        """
 
 
 rule make_CG_bed:

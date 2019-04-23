@@ -23,10 +23,8 @@ indir:
 genome:
 ###list of bed files to process
 intList: []
-###SNP black list (bed file)
-blackList:
 ###inclusion bounds for methylation extraction
-mbias_ignore: auto
+mbias_ignore: ''
 ## FASTQ file extension (default: ".fastq.gz")
 ext: '.fastq.gz'
 ## paired-end read name extension (default: ['_R1', "_R2"])
