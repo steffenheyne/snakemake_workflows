@@ -90,7 +90,7 @@ def run_FastQC(fromBam, trimReads):
         file_list = expand("FastQC/{sample}{read}_fastqc.html", sample = samples, read = reads),
     
         if trimReads=='user':
-            file_list.append(expand("FastQC_Cutadapt/{sample}{read}_fastqc.html", sample = samples, read = reads) )
+            file_list.append([expand("FastQC_Cutadapt/{sample}{read}_fastqc.html", sample = samples, read = reads)])
     
     return(file_list)
 
