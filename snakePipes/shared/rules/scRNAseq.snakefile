@@ -64,7 +64,9 @@ rule sc_bam_featureCounts_genomic:
     conda: CONDA_RNASEQ_ENV
     shell:
         """
-        {params.count_script} {input.bam} {input.gtf} {params.bc_file} {wildcards.sample} {params.lib_type} ${{TMPDIR}} {threads} 1>{output.counts} 2>{output.counts_summary};       
+        MYTEMP=$(mktemp -d ${{TMPDIR:-/tmp}}/snakepipes.XXXXXXXXXX);
+        {params.count_script} {input.bam} {input.gtf} {params.bc_file} {wildcards.sample} {params.lib_type} $MYTEMP {threads} 1>{output.counts} 2>{output.counts_summary};
+        rm -rf $MYTEMP
         """
 
 
@@ -98,7 +100,7 @@ rule combine_sample_counts:
         merge_script = workflow.basedir+"/scRNAseq_merge_coutt_files2.R",
         split = split_lib,
         sample_cell_names = str(cell_names or '')
-    conda: CONDA_RNASEQ_ENV
+    conda: CONDA_scRNASEQ_ENV
     shell:
         "Rscript {params.merge_script} Counts/ {output.merged_matrix} {output.used_cell_names_file} {params.split} {params.sample_cell_names} """
 

@@ -66,7 +66,7 @@ def run_deepTools_allelic():
 
 def run_CSAW():
     if sampleSheet:
-        return(["CSAW/CSAW.session_info.txt"])
+        return(["CSAW_{}/CSAW.session_info.txt".format(sample_name)])
     else:
         return([])
 
@@ -137,6 +137,10 @@ rule all:
 ### execute after workflow finished ############################################
 ################################################################################
 onsuccess:
-    cf.cleanLogs(workingdir)
+    cf.cleanLogs(workingdir, cluster_config)
     if "verbose" in config and config["verbose"]:
         print("\n--- ATAC OpenChrom workflow finished successfully! --------------------------------\n")
+        
+onerror:
+    print("\n !!! ERROR in ATAC OpenChrom workflow! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
+
