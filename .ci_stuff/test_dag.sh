@@ -49,6 +49,7 @@ touch BAM_input/sample1.bam \
       BAM_input/Sambamba/sample6.markdup.txt \
       BAM_input/deepTools_qc/bamPEFragmentSize/fragmentSize.metric.tsv
 mkdir -p output
+
 touch /tmp/genes.gtf /tmp/genome.fa /tmp/genome.fa.fai
 
 # DNA mapping

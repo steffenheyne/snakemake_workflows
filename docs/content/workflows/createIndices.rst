@@ -76,6 +76,7 @@ In addition to these, an organism yaml file will be created. Its location can be
 
 .. note:: The astute observer will note that no Salmon index is created. This is intentional and done to facilitate users changing which transcripts should be included on the fly.
 
+
 Command line options
 --------------------
 

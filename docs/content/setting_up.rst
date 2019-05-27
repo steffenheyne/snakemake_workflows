@@ -251,7 +251,6 @@ If you want, you can also give an absolute log directory starting with /.
 ==================== ======================================================================================
 
 
-
 .. _workflowOpts:
 
 Configure default options for workflows
