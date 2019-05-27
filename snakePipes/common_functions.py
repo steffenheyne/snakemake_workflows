@@ -26,7 +26,6 @@ def set_env_yamls():
             'CONDA_HIC_ENV': 'envs/hic.yaml',
             'CONDA_WGBS_ENV': 'envs/wgbs.yaml',
             'CONDA_RMD_ENV': 'envs/rmarkdown.yaml',
-            'CONDA_GATK_ENV': 'envs/gatk.yaml',
             'CONDA_SAMBAMBA_ENV': 'envs/sambamba.yaml'}
 
 
@@ -147,36 +146,14 @@ def check_replicates(sample_info_file):
     return True if each condition has at least 2 replicates
     this check is eg. necessary for sleuth
     """
-    f = open(sample_info_file)
-    conditionCol = None
-    nCols = None
-    d = dict()
-    for idx, line in enumerate(f):
-        cols = line.strip().split("\t")
-        if idx == 0:
-            if "condition" not in cols or "name" not in cols:
-                sys.exit("ERROR: Please use 'name' and 'condition' as column headers in the sample info file ({})!\n".format(sample_info_file))
-            conditionCol = cols.index("condition")
-            nCols = len(cols)
-            continue
-        elif idx == 1:
-            # Sometimes there's a column of row names, which lack a header
-            if len(cols) != nCols and len(cols) - 1 != nCols:
-                sys.exit("ERROR: there's a mismatch between the number of columns in the header and body of {}!\n".format(sample_info_file))
-            if len(cols) - 1 == nCols:
-                conditionCol += 1
-        if not len(line.strip()) == 0:
-            if cols[conditionCol] not in d:
-                d[cols[conditionCol]] = 0
-            d[cols[conditionCol]] += 1
-    f.close()
+    ret = subprocess.check_output(
+        "cat " + sample_info_file + "| awk '/^[[:space:]]$/{next;}{if (NR==1){ col=0; for (i=1;i<=NF;i++) if ($i~\"condition\") col=i}; if (NR>1) print $col}' | sort | uniq -c | awk '{if ($1>1) ok++}END{if (NR>1 && ok>=NR) print \"REPLICATES_OK\"}'",
+        shell=True).decode()
 
-    for k, v in d.items():
-        if v < 2:
-            sys.stderr.write("ERROR: The {} group has no replicates!\n".format(k))
-            return False
-
-    return True
+    if ret.find("REPLICATES_OK") >= 0:
+        return True
+    else:
+        return False
 
 
 # def get_fragment_length(infile, sampleName):
@@ -251,18 +228,14 @@ def checkAlleleParams(args):
     return allele_mode
 
 
-def cleanLogs(d, cluster_config):
+def cleanLogs(d):
     """
     Remove all empty log files, both in cluster_logs/ and */logs/
     """
-    if "snakePipes_cluster_logDir" in cluster_config:
-        path = os.path.join(d, cluster_config["snakePipes_cluster_logDir"], "*")
-        if re.search("^/", cluster_config["snakePipes_cluster_logDir"]):
-            path = os.path.join(cluster_config["snakePipes_cluster_logDir"], "*")
-        for f in glob.glob(path):
-            s = os.stat(f)
-            if s.st_size == 0:
-                os.remove(f)
+    for f in glob.glob(os.path.join(d, "cluster_logs", "*")):
+        s = os.stat(f)
+        if s.st_size == 0:
+            os.remove(f)
     for f in glob.glob(os.path.join(d, "*", "logs", "*")):
         s = os.stat(f)
         if s.st_size == 0:
@@ -278,7 +251,7 @@ def check_sample_info_header(sampleSheet_file):
     sampleSheet_file = os.path.abspath(sampleSheet_file)
     ret = open(sampleSheet_file).read().split("\n")[0].split()
     if "name" in ret and "condition" in ret:
-        sys.stderr.write("Sample sheet found and format is ok!\n")
+        print("Sample sheet found and format is ok!\n")
     else:
         sys.exit("ERROR: Please use 'name' and 'condition' as column headers in sample info file! ({})\n".format(sampleSheet_file))
     return sampleSheet_file
@@ -379,6 +352,7 @@ def checkCommonArguments(args, baseDir, outDir=False, createIndices=False):
                 else:
                     sys.exit("\nError! Working-dir (-d) dir not found! ({})\n".format(args.workingdir))
             args.outdir = args.workingdir
+    args.cluster_logs_dir = os.path.join(args.outdir, "cluster_logs")
     # 2. Sample info file
     if 'sampleSheet' in args and args.sampleSheet:
         args.sampleSheet = check_sample_info_header(args.sampleSheet)
@@ -403,7 +377,8 @@ def commonYAMLandLogs(baseDir, workflowDir, defaults, args, callingScript):
     workflowName = os.path.basename(callingScript)
     snakemake_path = os.path.dirname(os.path.abspath(callingScript))
 
-    os.makedirs(args.outdir, exist_ok=True)
+    # Ensure the log directory exists
+    os.makedirs(args.cluster_logs_dir, exist_ok=True)
 
     # save to configs.yaml in outdir
     config = defaults
@@ -417,16 +392,6 @@ def commonYAMLandLogs(baseDir, workflowDir, defaults, args, callingScript):
     if args.cluster_configfile:
         user_cluster_config = load_configfile(args.cluster_configfile, False)
         cluster_config = merge_dicts(cluster_config, user_cluster_config)  # merge/override variables from user_config.yaml
-    # Ensure the cluster log directory exists
-    if re.search("\\{snakePipes_cluster_logDir\\}", cluster_config["snakemake_cluster_cmd"]):
-        if "snakePipes_cluster_logDir" in cluster_config:
-            if re.search("^/", cluster_config["snakePipes_cluster_logDir"]):
-                os.makedirs(cluster_config["snakePipes_cluster_logDir"], exist_ok=True)
-            else:
-                os.makedirs(os.path.join(args.outdir, cluster_config["snakePipes_cluster_logDir"]), exist_ok=True)
-            cluster_config["snakemake_cluster_cmd"] = re.sub("\\{snakePipes_cluster_logDir\\}", cluster_config["snakePipes_cluster_logDir"], cluster_config["snakemake_cluster_cmd"])
-        else:
-            sys.exit("\nPlease provide a key 'snakePipes_cluster_logDir' and value in the cluster configuration file!\n")
     write_configfile(os.path.join(args.outdir, '{}.cluster_config.yaml'.format(workflowName)), cluster_config)
 
     # Save the organism YAML file as {PIPELINE}_organism.yaml
@@ -437,9 +402,7 @@ def commonYAMLandLogs(baseDir, workflowDir, defaults, args, callingScript):
     if workflowName != "createIndices" and os.path.abspath(organismYAMLname) != os.path.abspath(orgyaml):
         shutil.copyfile(orgyaml, organismYAMLname)
 
-    if isinstance(args.snakemake_options, list):
-        args.snakemake_options = ' '.join(args.snakemake_options)
-    if args.keepTemp:
+    if args.notemp:
         args.snakemake_options += " --notemp"
 
     snakemake_cmd = """
@@ -470,8 +433,10 @@ def commonYAMLandLogs(baseDir, workflowDir, defaults, args, callingScript):
     if not args.local:
         snakemake_cmd += ["--cluster-config",
                           os.path.join(args.outdir, '{}.cluster_config.yaml'.format(workflowName)),
-                          "--cluster", "'" + cluster_config["snakemake_cluster_cmd"], "'"]
-    return " ".join(snakemake_cmd)
+                          "--cluster", "'" + cluster_config["snakemake_cluster_cmd"],
+                          args.cluster_logs_dir, "--name {rule}.snakemake'"]
+
+    return snakemake_cmd
 
 
 def logAndExport(args, workflowName):
@@ -488,10 +453,15 @@ def logAndExport(args, workflowName):
     # append the new run number to the file name
     logfile_name = "{}_run-{}.log".format(workflowName, n)
 
-    return logfile_name
+    # create local temp dir and add this path to environment as $TMPDIR variable
+    # on SLURM: $TMPDIR is set, created and removed by SlurmEasy on cluster node
+    temp_path = make_temp_dir(args.tempdir, args.outdir)
+    snakemake_exports = ["export", "TMPDIR='{}'".format(temp_path), "&&"]
+
+    return snakemake_exports, logfile_name, temp_path
 
 
-def runAndCleanup(args, cmd, logfile_name):
+def runAndCleanup(args, cmd, logfile_name, temp_path):
     """
     Actually run snakemake. Kill its child processes on error.
     Also clean up when finished.
@@ -529,6 +499,12 @@ def runAndCleanup(args, cmd, logfile_name):
         if args.emailAddress:
             sendEmail(args, p.returncode)
         sys.exit(p.returncode)
+
+    # remove temp dir
+    if (temp_path != "" and os.path.exists(temp_path)):
+        shutil.rmtree(temp_path, ignore_errors=True)
+        if args.verbose:
+            print("Temp directory removed ({})!\n".format(temp_path))
 
     # Send email if desired
     if args.emailAddress:
