@@ -1,6 +1,5 @@
 snakemake_latency_wait: 300
-snakemake_cluster_cmd: module load slurm; SlurmEasy --mem-per-cpu {cluster.memory} --threads {threads} --log {snakePipes_cluster_logDir} --name {rule}.snakemake
-snakePipes_cluster_logDir: cluster_logs
+snakemake_cluster_cmd: module load slurm; SlurmEasy --mem-per-cpu {cluster.memory} --threads {threads} --log
 __default__:
     memory: 1G
 FASTQdownsample:
@@ -17,8 +16,6 @@ bamCoverage_coverage:
     memory: 5G
 bamCoverage_raw:
     memory: 5G
-CSAW:
-    memory: 3G
 plotCorrelation_pearson:
     memory: 3G
 plotCorrelation_spearman:

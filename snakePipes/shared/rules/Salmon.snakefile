@@ -7,14 +7,15 @@ rule SalmonIndex:
     benchmark:
         "Salmon/.benchmark/Salmon.index.benchmark"
     params:
-        salmon_index_options = salmon_index_options
+        salmon_index_options = salmon_index_options,
+        sasamp = 1
     log:
         out = "Salmon/SalmonIndex/SalmonIndex.out",
         err = "Salmon/SalmonIndex/SalmonIndex.err",
     threads: 16
     conda: CONDA_RNASEQ_ENV
     shell: """
-        salmon index -p {threads} -t {input} -i Salmon/SalmonIndex {params.salmon_index_options} > {log.out} 2> {log.err}
+        salmon index --sasamp {params.sasamp} -p {threads} -t {input} -i Salmon/SalmonIndex {params.salmon_index_options} > {log.out} 2> {log.err}
         """
 
 

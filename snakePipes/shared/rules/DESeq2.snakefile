@@ -59,6 +59,9 @@ rule DESeq2_Salmon:
         allele_info = 'FALSE',
         tx2gene_file = "Annotation/genes.filtered.t2g",
         rmdTemplate = os.path.join(maindir, "shared", "rscripts", "DESeq2Report.Rmd")
+    log:
+        out = "DESeq2_Salmon.out",
+        err = "DESeq2_Salmon.err"
     conda: CONDA_RNASEQ_ENV
     shell:
         "cd {params.outdir} && "
@@ -71,3 +74,4 @@ rule DESeq2_Salmon:
         "{params.allele_info} " # 6
         "../{input.tx2gene_file} " # 7
         "{params.rmdTemplate} " # 8
+        " > {log.out} 2> {log.err}"

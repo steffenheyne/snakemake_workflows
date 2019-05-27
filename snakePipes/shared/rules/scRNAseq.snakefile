@@ -64,9 +64,7 @@ rule sc_bam_featureCounts_genomic:
     conda: CONDA_RNASEQ_ENV
     shell:
         """
-        MYTEMP=$(mktemp -d ${{TMPDIR:-/tmp}}/snakepipes.XXXXXXXXXX);
-        {params.count_script} {input.bam} {input.gtf} {params.bc_file} {wildcards.sample} {params.lib_type} $MYTEMP {threads} 1>{output.counts} 2>{output.counts_summary};
-        rm -rf $MYTEMP
+        {params.count_script} {input.bam} {input.gtf} {params.bc_file} {wildcards.sample} {params.lib_type} ${{TMPDIR}} {threads} 1>{output.counts} 2>{output.counts_summary};       
         """
 
 

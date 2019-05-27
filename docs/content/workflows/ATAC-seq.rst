@@ -39,12 +39,6 @@ An example is below::
 
 .. note:: This sample sheet has the same requirements as the sample sheet in the ChIP-seq workflow, and also uses the same tool (CSAW) with a narrow default window size.
 
-If the user provides additional columns between 'name' and 'condition' in the sample sheet, the variables stored there will be used as blocking factors in the order they appear in the sample sheet. Condition will be the final column and it will be used for any statistical inference. 
-
-
-.. note:: In order to include or exclude peaks from selected samples in the union of peaks used in the differential binding analysis, the user must provide an additional column named 'UseRegions' and set it to True or False, accordingly. This column must supersede the 'condition' column in the column order. 
-
-
 Configuration file
 ~~~~~~~~~~~~~~~~~~
 
@@ -96,7 +90,7 @@ Understanding the outputs
 Assuming a sample sheet is used, the following will be **added** to the working directory::
 
     .
-    ├── CSAW_sampleSheet
+    ├── CSAW
     │   ├── CSAW.log
     │   ├── CSAW.session_info.txt
     │   ├── DiffBinding_allregions.bed
@@ -136,8 +130,6 @@ Currently the ATAC-seq workflow performs detection of open chromatin regions via
     * percentage of the genome covered by peaks.
 
 * **deepTools_ATAC**: contains the output of `plotFingerPrint <https://deeptools.readthedocs.io/en/develop/content/tools/plotFingerprint.html>`__, which is a useful QC plot to assess signal enrichment between the ATAC-seq samples.
-
-.. note:: The ``_sampleSheet`` suffix for the ``CSAW_sampleSheet`` is drawn from the name of the sample sheet you use. So if you instead named the sample sheet ``mySampleSheet.txt`` then the folder would be named ``CSAW_mySampleSheet``. This facilitates using multiple sample sheets.
 
 
 Where to find final bam files and biwgwigs

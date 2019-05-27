@@ -2,9 +2,8 @@ import os
 import re
 from operator import is_not
 import tempfile
+import pandas
 
-### hack until Devon's refactoring of WGBS is merged
-tempdir=outdir
 
 ## function to get the name of the samplesheet and extend the name of the folder for all analyses relying on sample_info
 def get_outdir(folder_name):
@@ -205,20 +204,6 @@ rule rm_dupes:
     conda: CONDA_SAMBAMBA_ENV
     shell: "tmp_dupes=$(mktemp -d -p $TMPDIR -t XXXXX.{wildcards.sample}); echo $tmp_dupes; sambamba markdup --hash-table-size=4194304 --remove-duplicates --tmpdir $tmp_dupes -t {threads} {input.sbam} {output.rmDupbam} 1>{log.out} 2>{log.err}"
 
-    rule rm_dupes:
-        input:
-            sbami="bams/{sample}.sorted.bam.bai",
-            sbam="bams/{sample}.sorted.bam"
-        output:
-            rmDupbam="bams/{sample}.PCRrm.bam"
-        log:
-            err="bams/logs/{sample}.rm_dupes.err",
-            out="bams/logs/{sample}.rm_dupes.out"
-        params:
-            tempdir=tempfile.mkdtemp(suffix='',prefix='',dir=tempdir)
-        threads: nthreads
-        conda: CONDA_SAMBAMBA_ENV
-        shell: "sambamba markdup --remove-duplicates -t {threads} --tmpdir {params.tempdir} {input.sbam} {output.rmDupbam} 1>{log.out} 2>{log.err}"
 
 rule index_PCRrm_bam:
     input:
@@ -347,8 +332,8 @@ if not skipDOC:
                 err="QC_metrics/logs/{sample}.depth_of_cov.err",
                 out="QC_metrics/logs/{sample}.depth_of_cov.out"
             threads: 1
-            conda: CONDA_GATK_ENV
-            shell: "gatk -Xmx30g -Djava.io.tmpdir={params.tempdir} -T DepthOfCoverage -R {input.irefG} -o {params.OUTlist0} -I {input.rmDupBam} -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -mmq 10 --partitionType sample ; gatk -Xmx30g -Djava.io.tmpdir={params.tempdir}  -T DepthOfCoverage -R {input.irefG} -o {params.OUTlist1} -I {input.rmDupBam} -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -mmq 10 --partitionType sample -L {input.ranCG}; {params.auxshell} 1>{log.out} 2>{log.err}"
+            conda: CONDA_WGBS_ENV
+            shell: "gatk3 -Xmx30g -Djava.io.tmpdir={params.tempdir} -T DepthOfCoverage -R {input.irefG} -o {params.OUTlist0} -I {input.rmDupBam} -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -mmq 10 --partitionType sample ; gatk3 -Xmx30g -Djava.io.tmpdir={params.tempdir}  -T DepthOfCoverage -R {input.irefG} -o {params.OUTlist1} -I {input.rmDupBam} -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -mmq 10 --partitionType sample -L {input.ranCG}; {params.auxshell} 1>{log.out} 2>{log.err}"
 
 
     else:
@@ -369,8 +354,8 @@ if not skipDOC:
                 err="QC_metrics/logs/{sample}.depth_of_cov.err",
                 out="QC_metrics/logs/{sample}.depth_of_cov.out"
             threads: 1
-            conda: CONDA_GATK_ENV
-            shell: "gatk -Xmx30g -Djava.io.tmpdir={params.tempdir} -T DepthOfCoverage -R {input.irefG} -o {params.OUTlist0} -I {input.rmDupBam} -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -mmq 10 --partitionType sample ; gatk -Xmx30g -Djava.io.tmpdir={params.tempdir}  -T DepthOfCoverage -R {input.irefG} -o {params.OUTlist1} -I {input.rmDupBam} -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -mmq 10 --partitionType sample -L {input.ranCG} 1>{log.out} 2>{log.err}"
+            conda: CONDA_WGBS_ENV
+            shell: "gatk3 -Xmx30g -Djava.io.tmpdir={params.tempdir} -T DepthOfCoverage -R {input.irefG} -o {params.OUTlist0} -I {input.rmDupBam} -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -mmq 10 --partitionType sample ; gatk3 -Xmx30g -Djava.io.tmpdir={params.tempdir}  -T DepthOfCoverage -R {input.irefG} -o {params.OUTlist1} -I {input.rmDupBam} -ct 0 -ct 1 -ct 2 -ct 5 -ct 10 -ct 15 -ct 20 -ct 30 -ct 50  -omitBaseOutput -mmq 10 --partitionType sample -L {input.ranCG} 1>{log.out} 2>{log.err}"
 
 if not trimReads is None and not fromBam:
     rule downsample_reads:
@@ -765,18 +750,193 @@ if intList:
             conda: CONDA_RMD_ENV
             threads: 1
             shell: "cp -v {params.rmd_in} {params.rmd_out} ;Rscript -e 'rmarkdown::render(\"{params.rmd_out}\", params=list(outdir=\"{params.statdir}\", input_func=\"{params.importfunc}\", stat_category=\"{params.stat_cat}\",sample_sheet=\"{params.sampleSheet}\"), output_file=\"{params.outFull}\")' 1>{log.out} 2>{log.err}"
+        
+    rule on_target_rate:
+        input:
+            bams=expand("bams/{sample}.PCRrm.bam",sample=samples)
+        output:
+            tab="custom_stats/on_target_stats.all_reads.txt",
+            plot="custom_stats/on_target_stats.all_reads.pdf"
+        params:
+            targets=intList,
+            labels = " ".join(samples)
+        log:
+            err="custom_stats/logs/on_target_stats.all_reads.err",
+            out="custom_stats/logs/on_target_stats.all_reads.out"
+        threads: nthreads
+        shell:"""
+            plotEnrichment -p {threads} \
+                   -b {input.bams} \
+                   --plotFile {output.plot}\
+                   --BED {params.targets} \
+                   --labels {params.labels} \
+                   --plotTitle 'Fraction of reads in target regions' \
+                   --outRawCounts {output.tab} \
+                   --variableScales > {log.out} 2> {log.err}
+            """
 
+rule on_target_rate_mapq:
+        input:
+            bams=expand("bams/{sample}.PCRrm.bam",sample=samples)
+        output:
+            tab="custom_stats/on_target_stats.mapq20.txt",
+            plot="custom_stats/on_target_stats.mapq20.pdf"
+        params:
+            targets=intList,
+            labels = " ".join(samples)
+        log:
+            err="custom_stats/logs/on_target_stats.mapq20.err",
+            out="custom_stats/logs/on_target_stats.mapq20.out"
+        threads: nthreads
+        conda: CONDA_SHARED_ENV
+        shell:"""
+            plotEnrichment -p {threads} \
+                   -b {input.bams} \
+                   --plotFile {output.plot}\
+                   --BED {params.targets} \
+                   --labels {params.labels} \
+                   --plotTitle 'Fraction of reads in target regions' \
+                   --outRawCounts {output.tab} \
+                   --variableScales \
+                   --minMappingQuality 20 1> {log.out} 2> {log.err}
+            """
 
-rule bedGraphToBigWig:
-    input: 
-        "methXT/{sample}_CpG.bedGraph",
-        genome_index
+rule on_target_reads_region:
+        input:
+            bams=expand("bams/{sample}.PCRrm.bam",sample=samples)
+        output:
+            tabq20="custom_stats/on_target_stats.per_region.mapq20.tsv",
+            tab="custom_stats/on_target_stats.per_region.tsv"
+        params:
+            targets=intList,
+            labels = " ".join(samples)
+        log:
+            err="custom_stats/logs/on_target_stats.per_region.err",
+            out="custom_stats/logs/on_target_stats.per_region.out"
+        threads: nthreads
+        conda: CONDA_SHARED_ENV
+        shell:"""
+            multiBamSummary BED-file \
+                -b {input.bams} \
+                --BED {params.targets} \
+                --outRawCounts tmp.q20.tsv \
+                --minMappingQuality 20 \
+                --labels {params.labels} \
+                -p {threads} 1> {log.out} 2> {log.err};
+            sort -k1,1 -k2,2n tmp.q20.tsv > {output.tabq20}; rm tmp.q20.tsv; 
+            multiBamSummary BED-file \
+                -b {input.bams} \
+                --BED {params.targets} \
+                --outRawCounts tmp.tsv \
+                --labels {params.labels} \
+                -p {threads} 1>> {log.out} 2>> {log.err};
+            sort -k1,1 -k2,2n tmp.tsv > {output.tab}; rm tmp.tsv;
+            """
+
+rule methyl_extract_custom:
+        input:
+            rmDupbam="bams/{sample}.PCRrm.bam",
+            sbami="bams/{sample}.PCRrm.bam.bai",
+            refG=refG
+        output:
+            methTab="custom_stats/{sample}_CpG.bedGraph",
+            meanTab="custom_stats/{sample}.mean_methyl_per_region.tsv"
+        params:
+            mbias_ignore=mbias_ignore,
+            targets=intList,
+            OUTpfx=lambda wildcards,output: os.path.join(outdir,re.sub('_CpG.bedGraph','',output.methTab))
+        log:
+            err="custom_stats/logs/{sample}.methyl_extract.err",
+            out="custom_stats/logs/{sample}.methyl_extract.out"
+        threads: nthreads
+        conda: CONDA_WGBS_ENV
+        shell: """
+            MethylDackel extract -o {params.OUTpfx} -l {params.targets} \
+                -q 20 -p 20 --minDepth 1 --mergeContext -@ {threads} \
+                {input.refG} {input.rmDupbam} 1>{log.out} 2>{log.err};
+            bedtools map -a {params.targets} -b {output.methTab} \
+                -c 4 -o mean -prec 4 > {output.meanTab} 2>>{log.err}
+            """
+
+rule per_base_cov_custom:
+    input:
+        bams=expand("bams/{sample}.PCRrm.bam",sample=samples)
     output:
-        "methXT/{sample}_CpG.methylation.bw",
-        "methXT/{sample}_CpG.coverage.bw"
-    log:
-        err='methXT/logs/{sample}_bedGraphToBigWig.stderr'
-    threads: 1
+        "custom_stats/coverage_per_base.targets.bed"
+    params:
+        targets=intList
     conda: CONDA_SHARED_ENV
-    shell: os.path.join(workflow_tools, "bedGraphToBigwig") + " {input[0]} {input[1]} {output[0]} {output[1]} 2> {log.err}"
+    log:
+        err="custom_stats/logs/coverage_per_base.targets.err",
+        out="custom_stats/logs/coverage_per_base.targets.out"
+    shell:"""
+        cat <(echo -e '#chr\tpos\t'$(echo '{input.bams}' | tr ' ' '\n' | sed 's/.*\///' | sed 's/.PCRrm.bam//g' | tr '\n' '\t')) <(samtools depth -a -q 20 -Q 20 {input.bams} -b <(cat {params.targets} | awk '{{OFS="\t";print $1,$2-1,$3-1}}') ) > {output} 2>{log.err}
+        """
+
+rule target_cpgs:
+    input:
+        "aux_files/genome.CpG.bed"
+    params:
+        targets=intList
+    output:
+        "custom_stats/targets.CpG.bed"
+    log:
+        err="custom_stats/logs/targets.CpG.err"
+    conda: CONDA_WGBS_ENV
+    shell:"""
+        bedtools intersect -a <(cat {params.targets} | awk '{{OFS="\t";$2=$2-1;$3=$3+2; print $0}}') -b {input} -wo | awk '{{OFS="\t"; print $4,$5,$6,$1"_"$2,0,$7,$8}}' > {output} 2>{log.err}
+    """
+
+rule target_cpg_coverage:
+    input:
+        bams=expand("bams/{sample}.PCRrm.bam",sample=samples),
+        cpg="custom_stats/targets.CpG.bed"
+    output:
+        "custom_stats/targets.CpG.coverage.txt"
+    log:
+        err="custom_stats/logs/targets.CpG.coverage.err"
+    conda: CONDA_SHARED_ENV
+    shell: """
+        cat <(echo -e '#chr\tpos\t'$(echo '{input.bams}' | tr ' ' '\n' | sed 's/.*\///' | sed 's/.PCRrm.bam//g' | tr '\n' '\t')) <(samtools depth -a -q 20 -Q 20 -b {input.cpg} {input.bams}) > {output} 2>{log.err}
+    """
     
+
+rule mean_target_coverage:
+    input:
+        "custom_stats/coverage_per_base.targets.bed"
+    output:
+        "custom_stats/mean_coverage_per_base.targets.bed"
+    params:
+        targets=intList
+    log:
+        err="custom_stats/logs/mean_coverage_per_base.targets.err"
+    conda: CONDA_WGBS_ENV
+    shell:"""
+        cat <(cat {input} | head -n1 | awk '{{OFS="\t";$2="start\tend";print $0}}') \
+            <(bedtools map -a {params.targets} -b <(cat {input} | \
+              awk '{{OFS="\t";$2=$2-1"\t"$2; print $0}}') \
+            -c $(cat {input} | awk '{{}}END{{for (i=4;i<=NF;i++){{printf i","}}; print NF+1}}') \
+            -o mean -prec 5) > {output} 2>{log.err}
+        """
+
+rule mean_methyl_per_region:
+    input:
+        tsv=expand("custom_stats/{sample}.mean_methyl_per_region.tsv",sample=samples),
+        tab="custom_stats/on_target_stats.per_region.mapq20.tsv",
+        meth=expand("custom_stats/{sample}_CpG.bedGraph",sample=samples),
+        cpgs="custom_stats/targets.CpG.bed"
+        
+    output:
+        "custom_stats/mean_methyl_per_region.tsv"
+    params:
+        indir="custom_stats/",
+        script = os.path.join(workflow_rscripts,"merge_methyl_data.R")
+    log:
+        err="custom_stats/logs/mean_methyl_per_region.err",
+        out="custom_stats/logs/mean_methyl_per_region.out"
+    conda: CONDA_WGBS_ENV
+    shell:"""
+            Rscript {params.script} {params.indir} {output} 2> {log.err}
+        """
+
+#sambamba depth base ../bams/*.PCRrm.bam -L /data_BSpipe/datasets/target_regions/targets.bed -z -m --min-base-quality 20 -F='mapping_quality>20' -t 20

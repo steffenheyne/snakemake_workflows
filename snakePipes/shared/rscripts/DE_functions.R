@@ -57,7 +57,6 @@ checktable <- function(countdata = NA, sampleSheet = NA, alleleSpecific = FALSE,
         if(alleleSpecific) {
             coln_allelic <- paste(rep(sampleSheet$name, each  = 3), c("all","genome1", "genome2"), sep = "_" )
             countdata <- countdata[,coln_allelic]
-
         } else {
             countdata <- countdata[,sampleSheet$name]
         }
@@ -80,26 +79,21 @@ checktable <- function(countdata = NA, sampleSheet = NA, alleleSpecific = FALSE,
 #'
 
 DESeq_basic <- function(countdata, coldata, fdr, alleleSpecific = FALSE, from_salmon = FALSE) {
-    cnames.sub<-unique(colnames(coldata)[2:which(colnames(coldata) %in% "condition")])
-    d<-as.formula(noquote(paste0("~",paste(cnames.sub,collapse="+"))))
-    
     # Normal DESeq
     print("Performing basic DESeq: test vs control")
     if(isTRUE(from_salmon)) {
       print("Using input from tximport")
         dds <- DESeq2::DESeqDataSetFromTximport(countdata,
-                                  colData = coldata, design =d)
-                
+                                  colData = coldata, design = ~ condition)
     } else {
       print("Using input from count table")
       if(isTRUE(alleleSpecific)) {
           rnasamp <- dplyr::select(countdata, dplyr::ends_with("_all"))
-          rownames(coldata)<-colnames(rnasamp)
           dds <- DESeq2::DESeqDataSetFromMatrix(countData = rnasamp,
-                                    colData = coldata, design =d)
+                                    colData = coldata, design = ~condition)
       } else {
           dds <- DESeq2::DESeqDataSetFromMatrix(countData = countdata,
-                                    colData = coldata, design =d)
+                                    colData = coldata, design = ~condition)
       }
     }
     dds <- DESeq2::DESeq(dds)
@@ -132,7 +126,6 @@ DESeq_allelic <- function(countdata, coldata, fdr) {
     design <- data.frame(name = colnames(rnasamp),
                    allele = rep(c("genome1", "genome2"), nrow(coldata)),
                    condition = rep(coldata$condition, each = 2) )
-    rownames(design)<-colnames(rnasamp)
 
     # Run DESeq
     dds <- DESeq2::DESeqDataSetFromMatrix(rnasamp, colData = design,

@@ -105,7 +105,7 @@ def run_deepTools_allelic():
 
 def run_CSAW():
     if sampleSheet:
-        return( ["CSAW_{}/CSAW.session_info.txt".format(sample_name)] )
+        return( ["CSAW/CSAW.session_info.txt"] )
     else:
         return([])
 
@@ -158,12 +158,9 @@ rule all:
 ### execute after workflow finished ############################################
 ################################################################################
 onsuccess:
-    cf.cleanLogs(workingdir, cluster_config)
+    cf.cleanLogs(workingdir)
     if "verbose" in config and config["verbose"]:
         print("\n--- ChIP-seq workflow finished successfully! -----------------------------------\n")
-
-onerror:
-    print("\n !!! ERROR in ChIP-seq workflow! !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n")
 
 
 ## benchmark ###################################################################

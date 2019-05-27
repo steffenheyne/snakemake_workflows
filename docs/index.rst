@@ -1,13 +1,7 @@
 snakePipes
 ==========
 
-.. image:: content/images/snakePipes.png
-   :scale: 20 %
-   :height: 200px
-   :width: 200 px
-
 snakePipes are pipelines built using `snakemake <snakemake.readthedocs.io>`__ and *python* for the analysis of epigenomic datasets.
-
 
 Below is the list of pipelines available in snakePipes
 ------------------------------------------------------
